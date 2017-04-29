@@ -13,5 +13,27 @@
 	</buildSpec>
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
+		<nature>org.jkiss.dbeaver.DBeaverNature</nature>
 	</natures>
+	<filteredResources>
+		<filter>
+			<id>1493315358195</id>
+			<name>databases</name>
+			<type>5</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-*.sqlite</arguments>
+			</matcher>
+		</filter>
+	</filteredResources>
+	<variableList>
+		<variable>
+			<name>DATABASES_LOC</name>
+			<value>$%7BPROJECT_LOC%7D/databases</value>
+		</variable>
+		<variable>
+			<name>LOGS_LOC</name>
+			<value>$%7BPROJECT_LOC%7D/logs</value>
+		</variable>
+	</variableList>
 </projectDescription>
