@@ -1,13 +1,13 @@
 package p2p.peer;
 
 import java.io.PrintWriter;
+import java.net.InetSocketAddress;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
+import p2p.common.interfaces.Instructable;
 import p2p.common.structures.Credentials;
-import p2p.common.structures.SocketDescription;
-import p2p.common.stubs.Instructable;
-import p2p.common.stubs.StartX;
+import p2p.common.utilities.StartX;
 
 /**
  * A PeerStartX object acts as an interface that provides input to and
@@ -124,7 +124,7 @@ public class PeerStartX extends StartX {
 				switch (last_command) {
 				case SET_TRACKER:
 
-					this.peer.setTracker(new SocketDescription(this.getInput("host"), //$NON-NLS-1$
+					this.peer.setTracker(new InetSocketAddress(this.getInput("host"), //$NON-NLS-1$
 					        Integer.parseInt(this.getInput("port")))); //$NON-NLS-1$
 
 					break;

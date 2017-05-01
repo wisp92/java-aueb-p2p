@@ -11,14 +11,14 @@ import java.io.Serializable;
  *        The type of the data the message contains.
  */
 public class Message<D extends Serializable> implements Serializable {
-
+	
 	/**
 	 * The serialVersionID required by the {@link Serializable}
 	 * interface to ensure the integrity of the object during a
 	 * serialization and deserialization process.
 	 */
 	private static final long serialVersionUID = 6253756439347867891L;
-
+	
 	/**
 	 * Tries to treat the provided object as a Message object and
 	 * retrieve its data casted in the expected type.
@@ -34,12 +34,12 @@ public class Message<D extends Serializable> implements Serializable {
 	 *         If one of the casts is not possible.
 	 */
 	public static <D extends Serializable> D getData(Object object, Class<D> expected_type) throws ClassCastException {
-
+		
 		return expected_type.cast(Message.class.cast(object).getData());
 	}
-
+	
 	private final D data;
-
+	
 	/**
 	 * Allocates a new Message object. The data remain <b>mutable</b>
 	 * after the construction. The caller is responsible to pass a
@@ -49,10 +49,10 @@ public class Message<D extends Serializable> implements Serializable {
 	 *        The data this message is going to contain.
 	 */
 	public Message(D data) {
-
+		
 		this.data = data;
 	}
-
+	
 	/**
 	 * Returns the contained data as a <b>mutable</b> object. The
 	 * caller is responsible for making a copy the of the data to
@@ -61,8 +61,8 @@ public class Message<D extends Serializable> implements Serializable {
 	 * @return The message's data.
 	 */
 	public D getData() {
-
+		
 		return this.data;
 	}
-
+	
 }

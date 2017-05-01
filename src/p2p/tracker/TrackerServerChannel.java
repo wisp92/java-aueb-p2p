@@ -5,12 +5,14 @@ import java.math.BigInteger;
 import java.net.Socket;
 import java.util.logging.Level;
 
-import p2p.common.Hash;
 import p2p.common.structures.Credentials;
+import p2p.common.structures.PeerContactInformation;
+import p2p.common.structures.PeerDescription;
 import p2p.common.stubs.connection.ServerChannel;
 import p2p.common.stubs.connection.message.Message;
 import p2p.common.stubs.connection.message.Reply;
 import p2p.common.stubs.connection.message.Request;
+import p2p.common.utilities.Hash;
 
 /**
  * A TrackerServerChannel object handles an incoming connection from
@@ -18,13 +20,15 @@ import p2p.common.stubs.connection.message.Request;
  *
  * @author {@literal p3100161 <Joseph Sakos>}
  */
-class TrackerServerChannel extends ServerChannel {
+public class TrackerServerChannel extends ServerChannel {
+
+	public static final boolean PEER_SERVER_REMOTE_HOST_POLICY = false;
 
 	private final TrackerDatabase database;
 	private final SessionManager  session_manager;
 
 	/**
-	 * Allocates a new Tracker.BasicServerChannel object.
+	 * Allocates a new TrackerServerChannel object.
 	 *
 	 * @param group
 	 *        The {@link ThreadGroup} object that this channel belongs
@@ -108,14 +112,9 @@ class TrackerServerChannel extends ServerChannel {
 					 * was created.
 					 */
 
-					Integer session_id = this.login(user_credentials);
+					if (this.login(user_credentials)) {
 
-					if (session_id != null) {
-
-						this.out.writeObject(new Reply<>(Reply.Type.Success, session_id));
-
-						this.log(Level.INFO, String.format("user with username <%s> logged in to session with id <%d>", //$NON-NLS-1$
-						        user_credentials.getUsername(), session_id));
+						this.out.writeObject(Reply.getSimpleSuccessMessage());
 
 					}
 					else {
@@ -151,12 +150,116 @@ class TrackerServerChannel extends ServerChannel {
 
 	}
 
-	protected Integer login(Credentials user_credentials) {
+	protected boolean login(Credentials user_credentials)
+	        throws IOException, ClassCastException, ClassNotFoundException {
+		
+		String username = user_credentials.getUsername();
+		Credentials registered_user = null;
+		
+		synchronized (this.database) {
+			
+			if (this.database.fix(this.database.getSchema())) {
+				registered_user = this.database.getUser(user_credentials.getUsername());
+			}
+			
+		}
+		
+		if (registered_user != null) {
+			
+			/*
+			 * Authenticate user.
+			 */
+			if (Hash.getSHA1(user_credentials.getPassword()).toString(16)
+			        .equalsIgnoreCase(registered_user.getPassword())) {
+				
+				Integer session_id = null;
+				
+				try {
+					
+					/*
+					 * Get user's id if active or generate a new one.
+					 */
+					synchronized (this.session_manager) {
+						
+						session_id = this.session_manager.getSessionID(username);
+						
+						if (session_id == null) {
+							
+							session_id = this.session_manager.getGeneratedID();
+							
+							/*
+							 * Should lock the session id until peer
+							 * description is received or the login
+							 * process fails.
+							 */
+							if (session_id != null) {
+								this.session_manager.lockSessionID(session_id);
+							}
+							
+						}
+						
+					}
+					
+					/*
+					 * Another check should be implement here in case
+					 * the generator fails.
+					 */
+					if (session_id != null) {
+						
+						this.out.writeObject(new Reply<>(Reply.Type.Success, session_id));
+						
+						/*
+						 * Receive the peer's information.
+						 */
+						PeerDescription peer_description = Message.getData(this.in.readObject(), PeerDescription.class);
+						
+						/*
+						 * Update the peer's host information
+						 * according to known data and current policy.
+						 */
 
-		/*
-		 * TODO Implement login method.
-		 */
-		return this.session_manager.getGeneratedID();
+						String peer_reveived_host = peer_description.getHostAddress();
+						String peer_known_host = this.socket.getInetAddress().getHostAddress();
+						
+						if (!peer_reveived_host.equals(peer_known_host)) {
+							if (!TrackerServerChannel.PEER_SERVER_REMOTE_HOST_POLICY) {
+								peer_reveived_host = peer_known_host;
+							}
+						}
+
+						synchronized (this.session_manager) {
+
+							this.session_manager.addSession(
+							        session_id, new PeerContactInformation(peer_reveived_host,
+							                peer_description.getPort(), username),
+							        peer_description.getSharedFileDescriptions());
+
+						}
+
+						this.log(Level.INFO, String.format("user with username <%s> logged in to session with id <%d>", //$NON-NLS-1$
+						        user_credentials.getUsername(), session_id));
+						
+						return true;
+					}
+					
+				} finally {
+					
+					if (session_id != null) {
+						
+						synchronized (this.session_manager) {
+							this.session_manager.unlockSessionID(session_id);
+						}
+						
+					}
+					
+				}
+				
+			}
+			
+		}
+		
+		return false;
+		
 	}
 
 	/**
@@ -179,7 +282,7 @@ class TrackerServerChannel extends ServerChannel {
 
 		synchronized (this.database) {
 
-			if (this.database.fix(this.database.getSchema()) && (this.database.getUser(username) == null)) {
+			if (this.database.fix(this.database.getSchema()) && this.database.getUser(username) == null) {
 				user_registered = this.database.setUser(username, hashed_password.toString(16));
 			}
 

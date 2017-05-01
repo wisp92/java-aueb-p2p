@@ -1,9 +1,10 @@
-package p2p.common;
+package p2p.common.utilities;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.logging.Level;
 
 /**
  * The Hash class provides a quick reference to some popular hash
@@ -62,7 +63,7 @@ public final class Hash {
 
 		} catch (NoSuchAlgorithmException | UnsupportedEncodingException ex) {
 
-			LoggerManager.getDefault().getLogger(Hash.class.getName()).warning(ex.toString());
+			LoggerManager.logException(LoggerManager.getDefault().getLogger(Hash.class.getName()), Level.WARNING, ex);
 		}
 
 		return null;

@@ -1,30 +1,32 @@
 package p2p.peer;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 
 import p2p.common.structures.Credentials;
+import p2p.common.structures.PeerDescription;
 import p2p.common.stubs.connection.ClientChannel;
 import p2p.common.stubs.connection.exceptions.FailedRequestException;
+import p2p.common.stubs.connection.message.Message;
 import p2p.common.stubs.connection.message.Reply;
 import p2p.common.stubs.connection.message.Request;
 
 /**
- * A PeerLoginClient object sends a login request to the tracker and
- * stores the session id provides as its response.
+ * A PeerAuthenticationClient object sends a login request to the
+ * tracker and stores the session id provides as its response.
  *
  * @author {@literal p3100161 <Joseph Sakos>}
  */
-class PeerLoginClient extends ClientChannel {
+class PeerAuthenticationClient extends ClientChannel {
 
-	private final Credentials	user_credentials;
-	private final ReentrantLock	configuration_lock;
-	private final ReentrantLock	authentication_lock;
-	private final Condition		tried_logged_in;
 	private final Peer			caller;
+	private final Credentials	user_credentials;
+	private final ReentrantLock	authentication_lock;
+	private final Condition		waits_response;
 
 	private Integer session_id = null;
 
@@ -39,13 +41,10 @@ class PeerLoginClient extends ClientChannel {
 	 * @param caller
 	 *        The peer that started the execution of this client. Used
 	 *        to create the PeerServerManager.
-	 * @param configuration_lock
-	 *        A lock that indicates which thread can currently update
-	 *        the peer's information.
 	 * @param authentication_lock
 	 *        A lock that indicates which is currently processing the
 	 *        authentication request.
-	 * @param tried_logged_in
+	 * @param waits_response
 	 *        A condition associated with the autentication's lock and
 	 *        should be signaled when the session id of the session is
 	 *        retrieved from the tracker.
@@ -55,16 +54,14 @@ class PeerLoginClient extends ClientChannel {
 	 *         If an error occurs during the initialization of the
 	 *         {@link Socket Socket} object.
 	 */
-	public PeerLoginClient(ThreadGroup group, String name, Peer caller, ReentrantLock configuration_lock,
-	        ReentrantLock authentication_lock, Condition tried_logged_in, Credentials user_credentials)
-	        throws IOException {
-		super(group, name, caller.getTracker());
+	public PeerAuthenticationClient(ThreadGroup group, String name, Peer caller, ReentrantLock authentication_lock,
+	        Condition waits_response, Credentials user_credentials) throws IOException {
+		super(group, name, caller.getTrackerAddress());
 
 		this.caller = caller;
-		this.configuration_lock = configuration_lock;
 		this.authentication_lock = authentication_lock;
 		this.user_credentials = user_credentials;
-		this.tried_logged_in = tried_logged_in;
+		this.waits_response = waits_response;
 
 	}
 
@@ -73,16 +70,13 @@ class PeerLoginClient extends ClientChannel {
 
 		super.close();
 
-		/*
-		 * Unlock both locks just in case of an error but do not
-		 * signal the condition for security.
-		 */
-
 		if (this.authentication_lock.isHeldByCurrentThread()) {
+
+			if (this.authentication_lock.getWaitQueueLength(this.waits_response) > 0) {
+				this.waits_response.signalAll();
+			}
+
 			this.authentication_lock.unlock();
-		}
-		if (this.configuration_lock.isHeldByCurrentThread()) {
-			this.configuration_lock.unlock();
 		}
 
 	}
@@ -93,47 +87,50 @@ class PeerLoginClient extends ClientChannel {
 	 */
 	@Override
 	protected void communicate() throws IOException, InterruptedException {
-
+		
 		this.out.writeObject(new Request<>(Request.Type.LOGIN, this.user_credentials));
-
+		
 		this.log(Level.FINE, "sent a login request"); //$NON-NLS-1$
-
+		
 		try {
-
-			this.session_id = Reply.getValidatedData(this.in.readObject(), Integer.class);
-
+			
+			Object reply = this.in.readObject();
+			
+			/*
+			 * For maximum efficiency the lock should be locked at
+			 * this point.
+			 */
+			
+			this.authentication_lock.lock();
+			
+			this.session_id = Reply.getValidatedData(reply, Integer.class);
+			if (this.session_id == null) throw new FailedRequestException();
+			
 			/*
 			 * Signal the peer immediately when the tracker replies
 			 * with a session id.
 			 */
+			
+			this.waits_response.signalAll();
+			this.waits_response.await();
+			
+			InetSocketAddress socket_address = this.caller.getServerAddress();
+			if (socket_address == null) throw new FailedRequestException();
 
-			this.authentication_lock.lock();
-			this.tried_logged_in.signalAll();
-			this.authentication_lock.unlock();
+			this.out.writeObject(new Message<>(new PeerDescription(socket_address, this.caller.getSharedFiles())));
 
-			if (this.session_id != null) {
-
-				this.configuration_lock.lockInterruptibly();
-				if (this.caller.startManager(0)) {
-					/*
-					 * TODO Send peer's description back to the
-					 * tracker.
-					 */
-					System.out.println("Peer's server started."); //$NON-NLS-1$
-				}
-
-			}
-
+			Reply.getValidatedData(this.in.readObject(), Boolean.class);
+			
 			this.status = Status.SUCCESSFULL;
-
+			
 		} catch (ClassCastException | ClassNotFoundException ex) {
 			throw new IOException(ex);
 		} catch (@SuppressWarnings("unused") FailedRequestException ex) {
-
+			
 			this.status = Status.FAILED;
-
+			
 		}
-
+		
 	}
 
 	/**
@@ -142,7 +139,7 @@ class PeerLoginClient extends ClientChannel {
 	 */
 	public Integer getSessionID() {
 
-		return this.session_id;
+		return new Integer(this.session_id);
 
 	}
 
@@ -151,7 +148,7 @@ class PeerLoginClient extends ClientChannel {
 	 */
 	public Credentials getUserCredentials() {
 
-		return this.user_credentials;
+		return new Credentials(this.user_credentials);
 	}
 
 }

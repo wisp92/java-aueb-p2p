@@ -21,6 +21,17 @@ public class Credentials implements Serializable {
 	private final String password;
 
 	/**
+	 * Copy constructor of the Credentials object.
+	 * 
+	 * @param object
+	 *        The object to be copied.
+	 */
+	public Credentials(Credentials object) {
+		this(object.getUsername(), object.getPassword());
+
+	}
+
+	/**
 	 * Allocates a new Credentials object.
 	 *
 	 * @param username

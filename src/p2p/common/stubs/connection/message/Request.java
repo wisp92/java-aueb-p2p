@@ -12,7 +12,7 @@ import java.io.Serializable;
  *        The type of the data the request message contains.
  */
 public final class Request<D extends Serializable> extends Message<D> {
-
+	
 	/**
 	 * A Request.Type enumeration indicates the type of the request.
 	 *
@@ -28,16 +28,16 @@ public final class Request<D extends Serializable> extends Message<D> {
 		 */
 		LOGIN;
 	}
-
+	
 	/**
 	 * The serialVersionID required by the {@link Serializable}
 	 * interface to ensure the integrity of the object during a
 	 * serialization and deserialization process.
 	 */
 	private static final long serialVersionUID = 2756295932040700638L;
-
+	
 	private final Type type;
-
+	
 	/**
 	 * Allocates a new Reply object.
 	 *
@@ -47,18 +47,18 @@ public final class Request<D extends Serializable> extends Message<D> {
 	 *        The data of the request.
 	 */
 	public Request(Type type, D data) {
-
+		
 		super(data);
-
+		
 		this.type = type;
 	}
-
+	
 	/**
 	 * @return The request's type.
 	 */
 	public Type getType() {
-
+		
 		return this.type;
 	}
-
+	
 }

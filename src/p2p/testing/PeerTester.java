@@ -2,30 +2,33 @@ package p2p.testing;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
-import p2p.common.CloseableThread;
-import p2p.common.LoggerManager;
+import p2p.common.interfaces.Instructable;
 import p2p.common.structures.Credentials;
-import p2p.common.structures.SocketDescription;
-import p2p.common.stubs.Instructable;
+import p2p.common.stubs.connection.CloseableThread;
+import p2p.common.utilities.LoggerManager;
 import p2p.peer.Peer;
 import p2p.tracker.Tracker;
 
 /**
- * A PeerRegistrationTester is responsible for testing the correct
- * registration of some peers to a tracker.
+ * A PeerTester is responsible for testing the correct registration of
+ * some peers to a tracker.
  *
  * @author {@literal p3100161 <Joseph Sakos>}
  */
-public class PeerRegistrationTester extends CloseableThread {
+public class PeerTester extends CloseableThread {
 
 	/**
-	 * The PeerRegistrationTester.Command indicates the commands that
-	 * can be passed from the command line as arguments.
+	 * The PeerTester.Command indicates the commands that can be
+	 * passed from the command line as arguments.
 	 *
 	 * @author {@literal p3100161 <Joseph Sakos>}
 	 */
@@ -81,27 +84,39 @@ public class PeerRegistrationTester extends CloseableThread {
 	/**
 	 * The default no of peers to run in parallel.
 	 */
-	public static final int	default_no_peers   = 1;
+	public static final int	default_no_peers	  = 1;
 	/**
 	 * The default number milliseconds to sleep when requested.
 	 */
-	public static final int	default_sleep_time = 1000;
+	public static final int	default_sleep_time	  = 1000;
 	/**
 	 * The delay in milliseconds between time delicate Processes. If
 	 * it set to 0 then no delay between any process is going to be
 	 * added.
 	 */
-	public static final int	default_tempo	   = 1;
+	public static final int	default_tempo		  = 1;
+	/**
+	 * Indicates the minimum number of sample files that are going to
+	 * be copied to the peer's shared directory before the execution.
+	 */
+	public static final int	min_files_sample_size = 2;
 
 	/**
 	 * Indicates the default directory of the databases.
 	 */
-	public static final String default_databases_directory = "databases";						 //$NON-NLS-1$
+	public static final String default_databases_directory = "databases"; //$NON-NLS-1$
+
+	/**
+	 * The default directory where the shared directories of the peers
+	 * are going to be created.
+	 */
+	public static final String default_shared_directory = "shared/peers"; //$NON-NLS-1$
+
 	/**
 	 * The default path to the tracker's database file.
 	 */
-	public static final String default_database_path	   = String.format("%s/%s",				 //$NON-NLS-1$
-	        PeerRegistrationTester.default_databases_directory, "default_tracker.sqlite");		 //$NON-NLS-1$
+	public static final String default_database_path = String.format("%s/%s", //$NON-NLS-1$
+	        PeerTester.default_databases_directory, "default_tracker.sqlite"); //$NON-NLS-1$
 
 	/**
 	 * Starts the execution of the tracker.
@@ -116,9 +131,9 @@ public class PeerRegistrationTester extends CloseableThread {
 		logger_manager.setPropagate(false);
 		LoggerManager.setAsDefault(logger_manager);
 
-		int no_peers = PeerRegistrationTester.default_no_peers;
-		int tempo = PeerRegistrationTester.default_tempo;
-		String database_path = PeerRegistrationTester.default_database_path;
+		int no_peers = PeerTester.default_no_peers;
+		int tempo = PeerTester.default_tempo;
+		String database_path = PeerTester.default_database_path;
 
 		try {
 
@@ -146,7 +161,7 @@ public class PeerRegistrationTester extends CloseableThread {
 			File databases_directory = new File(new File(database_path).getParent());
 
 			if (!databases_directory.isDirectory()) {
-				LoggerManager.getDefault().getLogger(PeerRegistrationTester.class.getName())
+				LoggerManager.getDefault().getLogger(PeerTester.class.getName())
 				        .severe(String.format("The specified database's directory <%s> does not exist.", //$NON-NLS-1$
 				                databases_directory));
 			}
@@ -154,21 +169,21 @@ public class PeerRegistrationTester extends CloseableThread {
 
 				ThreadGroup testers = new ThreadGroup("Testers"); //$NON-NLS-1$
 
-				try (PeerRegistrationTester tester
-				        = new PeerRegistrationTester(testers, "Tester", database_path, no_peers, tempo);) { //$NON-NLS-1$
+				try (PeerTester tester = new PeerTester(testers, "Tester", database_path, no_peers, tempo);) { //$NON-NLS-1$
 
 					tester.start();
 					tester.join();
 
 				} catch (InterruptedException | IOException ex) {
-					LoggerManager.getDefault().getLogger(PeerRegistrationTester.class.getName()).warning(ex.toString());
+					LoggerManager.logException(LoggerManager.getDefault().getLogger(PeerTester.class.getName()),
+					        Level.WARNING, ex);
 				}
 
 			}
 
 		} catch (@SuppressWarnings("unused") NoSuchElementException ex) {
-			LoggerManager.getDefault().getLogger(PeerRegistrationTester.class.getName())
-			        .severe("No supported command line argument."); //$NON-NLS-1$
+			LoggerManager.getDefault().getLogger(PeerTester.class.getName())
+			        .severe("Not a supported command line argument."); //$NON-NLS-1$
 		}
 
 	}
@@ -180,7 +195,7 @@ public class PeerRegistrationTester extends CloseableThread {
 	private final String	  database_path;
 
 	/**
-	 * Allocates a new PeerRegistrationTester object.
+	 * Allocates a new PeerTester object.
 	 *
 	 * @param group
 	 *        The {@link ThreadGroup} object that this tester belongs
@@ -195,15 +210,15 @@ public class PeerRegistrationTester extends CloseableThread {
 	 *        The delay in milliseconds between time delicate
 	 *        Processes.
 	 */
-	public PeerRegistrationTester(ThreadGroup group, String name, String database_path, int no_peers, int tempo) {
+	public PeerTester(ThreadGroup group, String name, String database_path, int no_peers, int tempo) {
 		super(group, name);
 
-		this.no_peers = no_peers > 0 ? no_peers : PeerRegistrationTester.default_no_peers;
-		this.tempo = tempo >= 0 ? tempo : PeerRegistrationTester.default_tempo;
+		this.no_peers = no_peers > 0 ? no_peers : PeerTester.default_no_peers;
+		this.tempo = tempo >= 0 ? tempo : PeerTester.default_tempo;
 
 		File database_file = new File(database_path);
-		this.database_path = database_file.exists() && database_file.isFile() ? database_path
-		        : PeerRegistrationTester.default_database_path;
+		this.database_path
+		        = database_file.exists() && database_file.isFile() ? database_path : PeerTester.default_database_path;
 
 	}
 
@@ -239,8 +254,8 @@ public class PeerRegistrationTester extends CloseableThread {
 
 			if (tracker.startManager(0, this.database_path)) {
 
-				SocketDescription tracker_description = tracker.getSocketDescription();
-				if (tracker_description != null) {
+				final InetSocketAddress tracker_socket_address = tracker.getServerAddress();
+				if (tracker_socket_address != null) {
 
 					ArrayDeque<Peer> peers = new ArrayDeque<>();
 
@@ -249,10 +264,9 @@ public class PeerRegistrationTester extends CloseableThread {
 						Credentials user_credentials = new Credentials(String.format("user-%d", i), null); //$NON-NLS-1$
 
 						/*
-						 * The close() method of the
-						 * PeerRegistrationTester makes sure to
-						 * prevent any memory leaks from the Peer
-						 * object's.
+						 * The close() method of the PeerTester makes
+						 * sure to prevent any memory leaks from the
+						 * Peer object's.
 						 */
 						@SuppressWarnings("resource")
 						Peer peer = new Peer(this.peers_group, String.format("%s.Peer-%d", this.getName(), i)) { //$NON-NLS-1$
@@ -264,17 +278,25 @@ public class PeerRegistrationTester extends CloseableThread {
 							@Override
 							public void run() {
 
-								this.setTracker(tracker_description);
-								this.setSharedDirectory(String.format("%s_shared", this.getName())); //$NON-NLS-1$
-								this.register(user_credentials);
-								this.login(user_credentials);
+								this.setTracker(tracker_socket_address);
+								TestUtils.newSharedDirectory(this,
+								        String.format("%s/%s_shared", //$NON-NLS-1$
+								                PeerTester.default_shared_directory, this.getName()),
+								        PeerTester.min_files_sample_size);
+
+								if (!this.login(user_credentials)) {
+									if (this.register(user_credentials)) {
+										this.login(user_credentials);
+									}
+								}
 
 								try {
 
 									this.close();
 
 								} catch (IOException ex) {
-									LoggerManager.getDefault().getLogger(this.getName()).severe(ex.toString());
+									LoggerManager.logException(LoggerManager.getDefault().getLogger(this.getName()),
+									        Level.SEVERE, ex);
 								}
 
 							}
@@ -296,19 +318,32 @@ public class PeerRegistrationTester extends CloseableThread {
 						        .fine(String.format("%d from %d active peers", //$NON-NLS-1$
 						                CloseableThread.countActive(this.peers_group), this.no_peers));
 
-						Thread.sleep(PeerRegistrationTester.default_sleep_time);
+						Thread.sleep(PeerTester.default_sleep_time);
 					}
+
+					List<File> shared_files = peers.parallelStream()
+					        .flatMap(x -> Arrays.asList(new File(x.getSharedDirectory()).listFiles()).parallelStream())
+					        .distinct().collect(Collectors.toList());
+					long no_authenticated_peers = peers.parallelStream().filter(x -> x.getSessionID() != null).count();
 
 					LoggerManager.getDefault().getLogger(this.getName())
 					        .info(String.format("%d peer(s) were able to login sucessfully.", //$NON-NLS-1$
-					                peers.parallelStream().filter(x -> x.getSessionID() != null).count()));
+					                no_authenticated_peers));
+
+					LoggerManager.getDefault().getLogger(this.getName())
+					        .info(String.format("%d number of files where the initial sample.", //$NON-NLS-1$
+					                shared_files.size()));
+					/*
+					 * Delete all shared files.
+					 */
+					shared_files.parallelStream().forEach(x -> x.delete());
 
 				}
 
 			}
 
 		} catch (IOException | InterruptedException ex) {
-			LoggerManager.getDefault().getLogger(this.getName()).severe(ex.toString());
+			LoggerManager.logException(LoggerManager.getDefault().getLogger(this.getName()), Level.SEVERE, ex);
 		} finally {
 
 			try {
@@ -316,7 +351,7 @@ public class PeerRegistrationTester extends CloseableThread {
 				this.close();
 
 			} catch (IOException ex) {
-				LoggerManager.getDefault().getLogger(this.getName()).severe(ex.toString());
+				LoggerManager.logException(LoggerManager.getDefault().getLogger(this.getName()), Level.SEVERE, ex);
 			}
 
 		}

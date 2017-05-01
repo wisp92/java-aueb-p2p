@@ -1,13 +1,12 @@
 package p2p.common.stubs.connection;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.logging.Level;
 
-import p2p.common.CloseableThread;
-import p2p.common.LoggerManager;
-import p2p.common.structures.SocketDescription;
+import p2p.common.utilities.LoggerManager;
 
 /**
  * A ServerChannelManager object listens to specified
@@ -89,14 +88,14 @@ public abstract class ServerChannelManager<S extends ServerChannel> extends Clos
 	}
 
 	/**
-	 * @return A {@link SocketDescription} object that contains the
+	 * @return A {@link InetSocketAddress} object that contains the
 	 *         required information to communicate with the server's
 	 *         socket.
 	 */
-	public SocketDescription getSocketDescription() {
-
-		return new SocketDescription(this.server_socket.getInetAddress().getHostAddress(),
-		        this.server_socket.getLocalPort());
+	public InetSocketAddress getSocketAddress() {
+		
+		return (InetSocketAddress) this.server_socket.getLocalSocketAddress();
+		
 	}
 
 	/**
@@ -107,7 +106,7 @@ public abstract class ServerChannelManager<S extends ServerChannel> extends Clos
 	 * @param message
 	 *        The message.
 	 */
-	public void log(Level level, String message) {
+	public synchronized void log(Level level, String message) {
 
 		LoggerManager.getDefault().getLogger(this.getClass().getName()).log(level,
 		        String.format("The %s object with name <%s> %s.", //$NON-NLS-1$
@@ -157,9 +156,25 @@ public abstract class ServerChannelManager<S extends ServerChannel> extends Clos
 						 * any memory leaks from the ServerChannel
 						 * object's.
 						 */
-						S server_channel
-						        = this.newServerChannel(this.servers, String.format("%s.Server-%d", this.getName(), i), //$NON-NLS-1$
-						                this.server_socket.accept());
+						S server_channel = null;
+
+						try {
+
+							server_channel = this.newServerChannel(this.servers,
+							        String.format("%s.Server-%d", this.getName(), i), //$NON-NLS-1$
+							        this.server_socket.accept());
+
+						} catch (@SuppressWarnings("unused") IOException ex) {
+
+							/*
+							 * Through an exception is the only way to
+							 * stop the server's socket from waiting
+							 * for incoming connections.
+							 */
+							break;
+
+						}
+
 						server_channel.start();
 
 						this.log(Level.INFO, String.format("started a new communication (%d active servers)", //$NON-NLS-1$
@@ -169,15 +184,6 @@ public abstract class ServerChannelManager<S extends ServerChannel> extends Clos
 
 				}
 
-			}
-
-		} catch (IOException ex) {
-
-			if (ex.getMessage().equals("Socket closed")) { //$NON-NLS-1$
-				LoggerManager.getDefault().getLogger(this.getClass().getName()).fine(ex.toString());
-			}
-			else {
-				LoggerManager.getDefault().getLogger(this.getClass().getName()).severe(ex.toString());
 			}
 
 		} finally {
@@ -190,7 +196,8 @@ public abstract class ServerChannelManager<S extends ServerChannel> extends Clos
 				        String.format("closed (%d active servers)", CloseableThread.countActive(this.servers))); //$NON-NLS-1$
 
 			} catch (IOException ex) {
-				LoggerManager.getDefault().getLogger(this.getClass().getName()).severe(ex.toString());
+				LoggerManager.logException(LoggerManager.getDefault().getLogger(this.getClass().getName()),
+				        Level.SEVERE, ex);
 			}
 
 		}

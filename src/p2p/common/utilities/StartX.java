@@ -1,4 +1,4 @@
-package p2p.common.stubs;
+package p2p.common.utilities;
 
 import java.io.PrintWriter;
 import java.util.Scanner;
@@ -10,7 +10,7 @@ import java.util.Scanner;
  * @author {@literal p3100161 <Joseph Sakos>}
  */
 public abstract class StartX {
-
+	
 	/**
 	 * The {@link Scanner} object that is used when input is required.
 	 */
@@ -20,7 +20,7 @@ public abstract class StartX {
 	 * prompts and the program's messages.
 	 */
 	protected final PrintWriter	out;
-
+	
 	/**
 	 * Allocates a new StartX object.
 	 *
@@ -32,12 +32,12 @@ public abstract class StartX {
 	 *        prompts and the program's messages.
 	 */
 	public StartX(Scanner in, PrintWriter out) {
-
+		
 		this.in = in;
 		this.out = out;
-
+		
 	}
-
+	
 	/**
 	 * Prompts for input and reads the next line.
 	 *
@@ -46,18 +46,18 @@ public abstract class StartX {
 	 * @return The requested input in string format.
 	 */
 	public String getInput(String prompt) {
-
+		
 		if (prompt != null) {
 			this.out.print(String.format("%s: ", prompt)); //$NON-NLS-1$
 		}
 		this.out.flush();
-
+		
 		return this.in.nextLine();
 	}
-
+	
 	/**
 	 * Starts the interface.
 	 */
 	public abstract void start();
-
+	
 }

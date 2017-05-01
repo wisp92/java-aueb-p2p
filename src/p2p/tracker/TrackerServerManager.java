@@ -9,14 +9,15 @@ import p2p.common.stubs.connection.ServerChannelManager;
 /**
  * A TrackerServerManager is a {@link ServerChannelManager} object
  * that listens's for incoming connections from the peers and
- * allocates a new {@link TrackerServerChannel} to handle each one.
+ * allocates a new {@link TrackerServerChannel} object to handle each
+ * one.
  *
  * @author {@literal p3100161 <Joseph Sakos>}
  */
 class TrackerServerManager extends ServerChannelManager<TrackerServerChannel> {
 
 	private final TrackerDatabase database;
-	private final SessionManager  session_manager;
+	private final SessionManager  session_manager = new SessionManager();
 
 	/**
 	 * Allocates a new TrackerServerManager object.
@@ -41,7 +42,6 @@ class TrackerServerManager extends ServerChannelManager<TrackerServerChannel> {
 		super(group, name, port);
 
 		this.database = new TrackerDatabase(database_path);
-		this.session_manager = new SessionManager();
 
 	}
 

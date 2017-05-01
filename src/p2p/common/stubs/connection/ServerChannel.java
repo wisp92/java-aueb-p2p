@@ -14,12 +14,12 @@ import java.net.Socket;
  * @author {@literal p3100161 <Joseph Sakos>}
  */
 public abstract class ServerChannel extends Channel {
-
+	
 	/*
 	 * The order of declaration is important for the 'in' and 'out'
 	 * variables.
 	 */
-
+	
 	/**
 	 * The stream from which the channel is going to read.
 	 */
@@ -28,7 +28,7 @@ public abstract class ServerChannel extends Channel {
 	 * The steam to which the channel is going to write.
 	 */
 	protected final ObjectOutputStream out = this.getOutputStream();
-
+	
 	/**
 	 * Allocates a new ClientChannel object.
 	 *
@@ -46,5 +46,5 @@ public abstract class ServerChannel extends Channel {
 	public ServerChannel(ThreadGroup group, String name, Socket socket) throws IOException {
 		super(group, name, socket);
 	}
-
+	
 }

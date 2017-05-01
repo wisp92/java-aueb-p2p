@@ -3,13 +3,12 @@ package p2p.common.stubs.connection;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.logging.Level;
 
-import p2p.common.CloseableThread;
-import p2p.common.LoggerManager;
-import p2p.common.structures.SocketDescription;
 import p2p.common.stubs.connection.message.Message;
+import p2p.common.utilities.LoggerManager;
 
 /*
  * The Channel object is accessible only by the other classes in the
@@ -34,6 +33,30 @@ abstract class Channel extends CloseableThread {
 	protected final Socket socket;
 
 	/**
+	 * Allocates a new Channel object. This constructor creates the
+	 * local {@link Socket} object and binds it to remote by following
+	 * the provided description.
+	 *
+	 * @param group
+	 *        The {@link ThreadGroup} object that this channel belongs
+	 *        to.
+	 * @param name
+	 *        The name of this channel.
+	 * @param socket_address
+	 *        A {@link InetSocketAddress} object that provides
+	 *        information about the remote socket. associated with
+	 *        this channel.
+	 * @throws IOException
+	 *         If an error occurs during the allocation of the local
+	 *         {@link Socket} object.
+	 */
+	public Channel(ThreadGroup group, String name, InetSocketAddress socket_address) throws IOException {
+		super(group, name);
+
+		this.socket = new Socket(socket_address.getAddress(), socket_address.getPort());
+	}
+
+	/**
 	 * Allocates a new Channel object.
 	 *
 	 * @param group
@@ -49,30 +72,6 @@ abstract class Channel extends CloseableThread {
 		super(group, name);
 
 		this.socket = socket;
-	}
-
-	/**
-	 * Allocates a new Channel object. This constructor creates the
-	 * local {@link Socket} object and binds it to remote by following
-	 * the provided description.
-	 *
-	 * @param group
-	 *        The {@link ThreadGroup} object that this channel belongs
-	 *        to.
-	 * @param name
-	 *        The name of this channel.
-	 * @param socket_description
-	 *        A {@link SocketDescription} object that provides
-	 *        information about the remote socket. associated with
-	 *        this channel.
-	 * @throws IOException
-	 *         If an error occurs during the allocation of the local
-	 *         {@link Socket} object.
-	 */
-	public Channel(ThreadGroup group, String name, SocketDescription socket_description) throws IOException {
-		super(group, name);
-
-		this.socket = new Socket(socket_description.getHost(), socket_description.getPort());
 	}
 
 	/*
@@ -164,36 +163,39 @@ abstract class Channel extends CloseableThread {
 	 */
 	@Override
 	public void run() {
-
+		
 		try {
-
+			
 			if (!this.socket.isClosed()) {
-
+				
 				this.log(Level.FINE, String.format("started (%d active in group <%s>)", //$NON-NLS-1$
 				        CloseableThread.countActive(this.getThreadGroup()), this.getThreadGroup().getName()));
-
+				
 				this.communicate();
 			}
-
+			
 		} catch (IOException ex) {
-			LoggerManager.getDefault().getLogger(this.getClass().getName()).severe(ex.toString());
+			LoggerManager.logException(LoggerManager.getDefault().getLogger(this.getClass().getName()), Level.SEVERE,
+			        ex);
 		} catch (InterruptedException ex) {
-			LoggerManager.getDefault().getLogger(this.getClass().getName()).warning(ex.toString());
+			LoggerManager.logException(LoggerManager.getDefault().getLogger(this.getClass().getName()), Level.WARNING,
+			        ex);
 		} finally {
-
+			
 			try {
-
+				
 				this.close();
-
+				
 				this.log(Level.FINE, String.format("closed (%d active in group <%s>)", //$NON-NLS-1$
-				        CloseableThread.countActive(this.getThreadGroup()), this.getThreadGroup().getName()));
-
+				        CloseableThread.countActive(this.getThreadGroup()) - 1, this.getThreadGroup().getName()));
+				
 			} catch (IOException ex) {
-				LoggerManager.getDefault().getLogger(this.getClass().getName()).severe(ex.toString());
+				LoggerManager.logException(LoggerManager.getDefault().getLogger(this.getClass().getName()),
+				        Level.SEVERE, ex);
 			}
-
+			
 		}
-
+		
 	}
 
 }

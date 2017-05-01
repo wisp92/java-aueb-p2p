@@ -1,9 +1,13 @@
-package p2p.common;
+package p2p.common.stubs.connection;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.List;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
+
+import p2p.common.utilities.LoggerManager;
 
 /**
  * A CloseableThread object can be used instead of a simple
@@ -35,10 +39,10 @@ public abstract class CloseableThread extends Thread implements Closeable {
 	 *        The group that contains the threads.
 	 * @return An {@link ArrayDeque} object of the threads.
 	 */
-	public static final ArrayDeque<Thread> getActive(ThreadGroup group) {
+	public static final List<Thread> getActive(ThreadGroup group) {
 
-		return new ArrayDeque<>(Thread.getAllStackTraces().keySet().parallelStream()
-		        .filter(x -> x.getThreadGroup() == group).collect(Collectors.toList()));
+		return Thread.getAllStackTraces().keySet().parallelStream().filter(x -> x.getThreadGroup() == group)
+		        .collect(Collectors.toList());
 
 	}
 
@@ -50,13 +54,7 @@ public abstract class CloseableThread extends Thread implements Closeable {
 	 */
 	public static final void interrupt(ThreadGroup group) {
 
-		ArrayDeque<Thread> active_threads = CloseableThread.getActive(group);
-
-		if (active_threads.size() > 0) {
-			for (Thread thread : active_threads) {
-				thread.interrupt();
-			}
-		}
+		CloseableThread.getActive(group).parallelStream().forEach(x -> x.interrupt());
 
 	}
 
@@ -87,7 +85,7 @@ public abstract class CloseableThread extends Thread implements Closeable {
 			this.close();
 
 		} catch (IOException ex) {
-			LoggerManager.getDefault().getLogger(this.getName()).severe(ex.toString());
+			LoggerManager.logException(LoggerManager.getDefault().getLogger(this.getName()), Level.SEVERE, ex);
 		}
 
 	}
