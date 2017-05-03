@@ -25,12 +25,12 @@ import p2p.utilities.LoggerManager;
  * @author {@literal p3100161 <Joseph Sakos>}
  */
 public class SearchClient extends ClientChannel {
-	
+
 	private final int	 session_id;
 	private final String filename;
-	
+
 	private List<Pair<String, InetSocketAddress>> peer_list;
-	
+
 	/**
 	 * Allocates a new SearchClient object.
 	 *
@@ -50,25 +50,25 @@ public class SearchClient extends ClientChannel {
 	public SearchClient(final ThreadGroup group, final String name, final InetSocketAddress socket_address,
 	        final int session_id, final String filename) throws IOException {
 		super(group, name, socket_address);
-		
+
 		this.filename = filename;
 		this.session_id = session_id;
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see p2p.components.communication.Channel#communicate()
 	 */
 	@Override
 	protected void communicate() throws IOException, InterruptedException {
-		
+
 		this.out.writeObject(new Request<>(Request.Type.SEARCH, new Pair<>(this.session_id, this.filename)));
-		
+
 		LoggerManager.tracedLog(this, Level.FINE,
 		        String.format("A new search request for the file <%s> was sent through the channel.", this.filename)); //$NON-NLS-1$
-		
+
 		try {
-			
+
 			/*
 			 * Reads the peer list from the reply and validates the data.
 			 */
@@ -76,22 +76,22 @@ public class SearchClient extends ClientChannel {
 			this.peer_list = data.parallelStream().map(x -> Pair.class.cast(x))
 			        .map(x -> new Pair<>(String.class.cast(x.getFirst()), InetSocketAddress.class.cast(x.getSecond())))
 			        .collect(Collectors.toList());
-			
+
 			this.status = Status.SUCCESSFULL;
-			
+
 		} catch (ClassCastException | ClassNotFoundException ex) {
 			throw new IOException(ex);
 		} catch (@SuppressWarnings("unused") final FailedRequestException ex) {
-			
+
 			this.status = Status.FAILED;
-			
+
 		}
-		
+
 	}
-	
+
 	public List<Pair<String, InetSocketAddress>> getPeerList() {
-		
+
 		return this.peer_list.parallelStream().map(x -> new Pair<>(x)).collect(Collectors.toList());
 	}
-	
+
 }

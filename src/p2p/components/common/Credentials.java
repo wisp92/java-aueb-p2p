@@ -9,14 +9,14 @@ import java.io.Serializable;
  * @author {@literal p3100161 <Joseph Sakos>}
  */
 public class Credentials extends Pair<String, String> {
-	
+
 	/**
 	 * The serialVersionID required by the {@link Serializable} interface to
 	 * ensure the integrity of the object during a serialization and
 	 * deserialization process.
 	 */
 	private static final long serialVersionUID = -7183891689483965682L;
-	
+
 	/**
 	 * Copy constructor of the Credentials object.
 	 *
@@ -25,9 +25,9 @@ public class Credentials extends Pair<String, String> {
 	 */
 	public Credentials(final Credentials object) {
 		this(object.getUsername(), object.getPassword());
-		
+
 	}
-	
+
 	/**
 	 * Allocates a new Credentials object.
 	 *
@@ -40,31 +40,31 @@ public class Credentials extends Pair<String, String> {
 	public Credentials(final String username, final String password) {
 		super(username, password != null ? password : ""); //$NON-NLS-1$
 	}
-	
+
 	/**
 	 * @return The user's password.
 	 */
 	public String getPassword() {
-		
+
 		return this.getSecond();
 	}
-	
+
 	/**
 	 * @return The user's username.
 	 */
 	public String getUsername() {
-		
+
 		return this.getFirst();
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
 	public String toString() {
-		
+
 		return String.format("%s:%s", this.getUsername(), this.getPassword()); //$NON-NLS-1$
 	}
-	
+
 }

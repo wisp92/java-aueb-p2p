@@ -14,10 +14,10 @@ import p2p.components.communication.ServerChannelManager;
  * @author {@literal p3100161 <Joseph Sakos>}
  */
 class TrackerServerManager extends ServerChannelManager<TrackerServerChannel> {
-
+	
 	private final TrackerDatabase database;
 	private final SessionManager  session_manager = new SessionManager();
-
+	
 	/**
 	 * Allocates a new TrackerServerManager object.
 	 *
@@ -35,13 +35,14 @@ class TrackerServerManager extends ServerChannelManager<TrackerServerChannel> {
 	 *             I an error occurs during the allocation of the
 	 *             {@link ServerSocket} object.
 	 */
-	public TrackerServerManager(ThreadGroup group, String name, int port, String database_path) throws IOException {
+	public TrackerServerManager(final ThreadGroup group, final String name, final int port, final String database_path)
+	        throws IOException {
 		super(group, name, port);
-
+		
 		this.database = new TrackerDatabase(database_path);
-
+		
 	}
-
+	
 	/**
 	 * Allocates a new TrackerServerManager object that is going to listen to a
 	 * random port. Use the {@link ServerChannelManager#getSocketAddress
@@ -59,22 +60,23 @@ class TrackerServerManager extends ServerChannelManager<TrackerServerChannel> {
 	 *             IOException If an error occurs during the allocation of the
 	 *             {@link ServerSocket} object.
 	 */
-	public TrackerServerManager(ThreadGroup group, String name, String database_path) throws IOException {
+	public TrackerServerManager(final ThreadGroup group, final String name, final String database_path)
+	        throws IOException {
 		this(group, name, 0, database_path);
 	}
-
+	
 	/*
 	 * (non-Javadoc)
 	 * @see p2p.components.communication.ServerChannelManager#close()
 	 */
 	@Override
 	public void close() throws IOException {
-
+		
 		super.close();
 		this.database.close();
-
+		
 	}
-
+	
 	/*
 	 * (non-Javadoc)
 	 * @see p2p.components.communication.ServerChannelManager#
@@ -82,9 +84,10 @@ class TrackerServerManager extends ServerChannelManager<TrackerServerChannel> {
 	 * java.net.Socket)
 	 */
 	@Override
-	protected TrackerServerChannel newServerChannel(ThreadGroup group, String name, Socket socket) throws IOException {
-
+	protected TrackerServerChannel newServerChannel(final ThreadGroup group, final String name, final Socket socket)
+	        throws IOException {
+		
 		return new TrackerServerChannel(group, name, socket, this.database, this.session_manager);
 	}
-
+	
 }

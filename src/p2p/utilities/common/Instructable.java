@@ -10,7 +10,7 @@ import java.util.NoSuchElementException;
  * @author {@literal p3100161 <Joseph Sakos>}
  */
 public interface Instructable {
-
+	
 	/**
 	 * Searches the enumeration for a Instructable object that is associated
 	 * with the given text.
@@ -27,14 +27,15 @@ public interface Instructable {
 	 *             If no Instructable object can be associated with the given
 	 *             text.
 	 */
-	public static <T extends Enum<T> & Instructable> T find(Class<T> type, String text) throws NoSuchElementException {
-
+	public static <T extends Enum<T> & Instructable> T find(final Class<T> type, final String text)
+	        throws NoSuchElementException {
+		
 		return EnumSet.allOf(type).stream().parallel().filter(x -> x.getText().equalsIgnoreCase(text)).findAny().get();
 	}
-
+	
 	/**
 	 * @return The text associated with the Instructable.
 	 */
 	public String getText();
-
+	
 }

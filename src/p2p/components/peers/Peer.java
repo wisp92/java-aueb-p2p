@@ -57,10 +57,10 @@ public class Peer extends CloseableThread {
 	protected final ThreadGroup server_managers_group = new ThreadGroup(this.getThreadGroup(),
 	        String.format("%s.ServerManagers", this.getName())); //$NON-NLS-1$
 	
-	private LinkedList<DownloadScheduler>	download_managers	   = new LinkedList<>();
-	private PeerServerManager			current_server_manager = null;
-	private String						shared_directory_path  = null;
-	private InetSocketAddress			tracker_socket_address = null;
+	private final LinkedList<DownloadScheduler>	download_managers	   = new LinkedList<>();
+	private PeerServerManager					current_server_manager = null;
+	private String								shared_directory_path  = null;
+	private InetSocketAddress					tracker_socket_address = null;
 	
 	private Integer session_id = null;
 	
@@ -72,8 +72,81 @@ public class Peer extends CloseableThread {
 	 * @param name
 	 *            The name of this peer.
 	 */
-	public Peer(ThreadGroup group, String name) {
+	public Peer(final ThreadGroup group, final String name) {
 		super(group, name);
+	}
+	
+	/**
+	 * Implement a new download request through the use of a
+	 * {@link SearchClient} object. If the new file is going to be added to the
+	 * shared files directory and the tracker is going to be notified for the
+	 * change. Also to reward the seeder a acknowledgement message is going to
+	 * be sent to the tracker. To check about the progress of a download the
+	 * checkDownloads() method can be used.
+	 *
+	 * @param filename
+	 *            The requested filename.
+	 * @return True If the download was started successfully.
+	 */
+	public boolean addDownload(final String filename) {
+		
+		if (!this.configuration_lock.tryLock()) return false;
+		
+		try {
+			
+			if ((filename != null) && this.isTrackerSet() && this.isLoggedIn()) {
+				
+				final String download_name = String.format("%s.SimpleDownload-%s", this.getName(), filename); //$NON-NLS-1$
+				boolean request_processed = true;
+				
+				/*
+				 * Check that only a single download request exist for the same
+				 * file.
+				 */
+				
+				synchronized (this.clients_group) {
+					request_processed = CloseableThread.getActive(this.clients_group).parallelStream()
+					        .filter(x -> x.getName().equals(download_name)).count() > 0;
+				}
+				
+				if (request_processed) {
+					
+					LoggerManager.tracedLog(Level.WARNING,
+					        String.format("A request to download the file <%s> is currently under process.", filename)); //$NON-NLS-1$
+					
+					return false;
+					
+				}
+				
+				/*
+				 * The {@link Peer#close close()} prevents any memory leaks from
+				 * the {@link SearchClient} objects.
+				 */
+				
+				synchronized (this.clients_group) {
+					
+					final DownloadScheduler download_manager = new DownloadScheduler(this.clients_group, download_name,
+					        this.tracker_socket_address, this.session_id, filename, this.shared_directory_path);
+					
+					download_manager.start();
+					
+					/*
+					 * Since the group only stores active threads we use another
+					 * structure to store all the user's download requests. This
+					 * variable should only be used here to avoid race
+					 * conditions.
+					 */
+					this.download_managers.add(download_manager);
+					
+				}
+				
+			}
+			
+		} finally {
+			this.configuration_lock.unlock();
+		}
+		
+		return false;
 	}
 	
 	/*
@@ -189,87 +262,14 @@ public class Peer extends CloseableThread {
 		return this.tracker_socket_address != null;
 	}
 	
+	// TODO Add checkDownloads method.
+	
 	/**
 	 * @return True If the peer is currently waiting for incoming connections.
 	 */
 	public boolean isWaitingConnections() {
 		
 		return (this.current_server_manager != null) && this.current_server_manager.isAlive();
-	}
-	
-	// TODO Add checkDownloads method.
-	
-	/**
-	 * Implement a new download request through the use of a
-	 * {@link SearchClient} object. If the new file is going to be added to the
-	 * shared files directory and the tracker is going to be notified for the
-	 * change. Also to reward the seeder a acknowledgement message is going to
-	 * be sent to the tracker. To check about the progress of a download the
-	 * checkDownloads() method can be used.
-	 *
-	 * @param filename
-	 *            The requested filename.
-	 * @return True If the download was started successfully.
-	 */
-	public boolean addDownload(String filename) {
-		
-		if (!this.configuration_lock.tryLock()) return false;
-		
-		try {
-			
-			if ((filename != null) && this.isTrackerSet() && this.isLoggedIn()) {
-				
-				String download_name = String.format("%s.SimpleDownload-%s", this.getName(), filename); //$NON-NLS-1$
-				boolean request_processed = true;
-				
-				/*
-				 * Check that only a single download request exist for the same
-				 * file.
-				 */
-				
-				synchronized (this.clients_group) {
-					request_processed = CloseableThread.getActive(this.clients_group).parallelStream()
-					        .filter(x -> x.getName().equals(download_name)).count() > 0;
-				}
-				
-				if (request_processed) {
-					
-					LoggerManager.tracedLog(Level.WARNING,
-					        String.format("A request to download the file <%s> is currently under process.", filename)); //$NON-NLS-1$
-					
-					return false;
-					
-				}
-				
-				/*
-				 * The {@link Peer#close close()} prevents any memory leaks from
-				 * the {@link SearchClient} objects.
-				 */
-				
-				synchronized (this.clients_group) {
-					
-					DownloadScheduler download_manager = new DownloadScheduler(this.clients_group, download_name,
-					        this.tracker_socket_address, this.session_id, filename);
-					
-					download_manager.start();
-					
-					/*
-					 * Since the group only stores active threads we use another
-					 * structure to store all the user's download requests. This
-					 * variable should only be used here to avoid race
-					 * conditions.
-					 */
-					this.download_managers.add(download_manager);
-					
-				}
-				
-			}
-			
-		} finally {
-			this.configuration_lock.unlock();
-		}
-		
-		return false;
 	}
 	
 	/**
@@ -282,7 +282,7 @@ public class Peer extends CloseableThread {
 	 *            The user's credentials.
 	 * @return True If the login was successful.
 	 */
-	public boolean login(Credentials user_credentials) {
+	public boolean login(final Credentials user_credentials) {
 		
 		if (!this.configuration_lock.tryLock()) return false;
 		
@@ -303,8 +303,8 @@ public class Peer extends CloseableThread {
 				 * condition are used to synchronize the two objects.
 				 */
 				
-				ReentrantLock authentication_lock = new ReentrantLock();
-				Condition waits_authentication_response = authentication_lock.newCondition();
+				final ReentrantLock authentication_lock = new ReentrantLock();
+				final Condition waits_authentication_response = authentication_lock.newCondition();
 				
 				authentication_lock.lock();
 				
@@ -323,7 +323,7 @@ public class Peer extends CloseableThread {
 					waits_authentication_response.await();
 					
 					@SuppressWarnings("hiding")
-					Integer session_id = client_channel.getSessionID();
+					final Integer session_id = client_channel.getSessionID();
 					
 					if ((client_channel.getStatus() == ClientChannel.Status.UNKNOWN) && (session_id != null)) {
 						
@@ -361,10 +361,10 @@ public class Peer extends CloseableThread {
 						
 					}
 					
-				} catch (IOException ex) {
+				} catch (final IOException ex) {
 					LoggerManager.tracedLog(this, Level.SEVERE, "An IOException occurred during the login attempt.", //$NON-NLS-1$
 					        ex);
-				} catch (InterruptedException ex) {
+				} catch (final InterruptedException ex) {
 					
 					LoggerManager.tracedLog(this, Level.WARNING, "The login attempt was interrupted.", ex); //$NON-NLS-1$
 					
@@ -441,10 +441,10 @@ public class Peer extends CloseableThread {
 						
 					}
 					
-				} catch (IOException ex) {
+				} catch (final IOException ex) {
 					LoggerManager.tracedLog(this, Level.SEVERE, "An IOException occurred during the logout attempt.", //$NON-NLS-1$
 					        ex);
-				} catch (InterruptedException ex) {
+				} catch (final InterruptedException ex) {
 					LoggerManager.tracedLog(this, Level.WARNING, "The logout attempt was interrupted.", ex); //$NON-NLS-1$
 				}
 				
@@ -464,7 +464,7 @@ public class Peer extends CloseableThread {
 			 * server side logout and client side logout.
 			 */
 			
-			boolean successful_clientside_logout = !this.isWaitingConnections() && (this.session_id == null);
+			final boolean successful_clientside_logout = !this.isWaitingConnections() && (this.session_id == null);
 			
 			if (successful_clientside_logout) {
 				
@@ -480,6 +480,11 @@ public class Peer extends CloseableThread {
 		
 	}
 	
+	public int numberOfActiveServers() {
+		
+		return this.current_server_manager.numberOfActiveServers();
+	}
+	
 	/**
 	 * Implement a new registration request through the use of a
 	 * {@link PeerRegistrationClient} object. If the request was successful a
@@ -491,7 +496,7 @@ public class Peer extends CloseableThread {
 	 *            The new user's credentials.
 	 * @return True If the registration was successful.
 	 */
-	public boolean register(Credentials user_credentials) {
+	public boolean register(final Credentials user_credentials) {
 		
 		if (!this.configuration_lock.tryLock()) return false;
 		
@@ -523,11 +528,11 @@ public class Peer extends CloseableThread {
 						return true;
 					}
 					
-				} catch (IOException ex) {
+				} catch (final IOException ex) {
 					LoggerManager.tracedLog(this, Level.SEVERE,
 					        "An IOException occurred during the registration attempt.", //$NON-NLS-1$
 					        ex);
-				} catch (InterruptedException ex) {
+				} catch (final InterruptedException ex) {
 					LoggerManager.tracedLog(this, Level.WARNING, "The registration attempt was interrupted.", ex); //$NON-NLS-1$
 				}
 				
@@ -553,7 +558,7 @@ public class Peer extends CloseableThread {
 	 *            The path to the peer's shared directory.
 	 * @return True If the shared directory updated successfully.
 	 */
-	public boolean setSharedDirectory(String shared_directory_path) {
+	public boolean setSharedDirectory(final String shared_directory_path) {
 		
 		if (!this.configuration_lock.tryLock()) return false;
 		
@@ -585,7 +590,7 @@ public class Peer extends CloseableThread {
 	 *            The tracker's socket address.
 	 * @return True If the tracker description was updated successfully.
 	 */
-	public boolean setTracker(InetSocketAddress tracker_socket_address) {
+	public boolean setTracker(final InetSocketAddress tracker_socket_address) {
 		
 		if (!this.configuration_lock.tryLock()) return false;
 		
@@ -620,7 +625,7 @@ public class Peer extends CloseableThread {
 	 *            selected.
 	 * @return True If the server was started successfully.
 	 */
-	public boolean startManager(int port) {
+	public boolean startManager(final int port) {
 		
 		if (!this.configuration_lock.tryLock()) return false;
 		
@@ -636,7 +641,7 @@ public class Peer extends CloseableThread {
 				
 				return true;
 				
-			} catch (IOException ex) {
+			} catch (final IOException ex) {
 				LoggerManager.tracedLog(this, Level.SEVERE,
 				        "An IOException occurred while initializing the server manager.", //$NON-NLS-1$
 				        ex);
@@ -650,12 +655,17 @@ public class Peer extends CloseableThread {
 		
 	}
 	
+	public boolean stopManager() {
+		
+		return this.stopManager(false);
+	}
+	
 	/**
 	 * Stops the {@link PeerServerManager} object if it is currently running.
 	 *
 	 * @return True If the server was stopped successfully.
 	 */
-	public boolean stopManager() {
+	public boolean stopManager(final boolean use_gentle_interrupt) {
 		
 		if (!this.configuration_lock.tryLock()) return false;
 		
@@ -663,14 +673,19 @@ public class Peer extends CloseableThread {
 			
 			if (!this.isWaitingConnections()) return false;
 			
-			this.current_server_manager.interrupt();
+			if (use_gentle_interrupt) {
+				this.current_server_manager.gentleInterrupt();
+			}
+			else {
+				this.current_server_manager.interrupt();
+			}
 			
 			try {
 				
 				this.current_server_manager.join();
 				return true;
 				
-			} catch (InterruptedException ex) {
+			} catch (final InterruptedException ex) {
 				LoggerManager.tracedLog(this, Level.WARNING,
 				        "An IOException occurred while stopping the server manager.", //$NON-NLS-1$
 				        ex);
@@ -682,6 +697,28 @@ public class Peer extends CloseableThread {
 		
 		return false;
 		
+	}
+	
+	public long getActiveDownloads() {
+		
+		return this.download_managers.parallelStream().filter(x -> x.getStatus() == ClientChannel.Status.UNKNOWN)
+		        .count();
+	}
+	
+	public List<File> getDownloadedFiles() {
+		
+		return this.download_managers.parallelStream().filter(x -> x.getStatus() == ClientChannel.Status.SUCCESSFULL)
+		        .map(x -> x.getFile()).distinct().collect(Collectors.toList());
+	}
+	
+	public long getCompletedDownloads() {
+		return this.download_managers.parallelStream().filter(x -> x.getStatus() == ClientChannel.Status.SUCCESSFULL)
+		        .count();
+	}
+	
+	public long getFailedDownloads() {
+		return this.download_managers.parallelStream().filter(x -> x.getStatus() == ClientChannel.Status.FAILED)
+		        .count();
 	}
 	
 }

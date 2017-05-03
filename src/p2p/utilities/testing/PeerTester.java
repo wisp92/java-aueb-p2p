@@ -7,10 +7,10 @@ import java.time.temporal.ValueRange;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Random;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -28,6 +28,41 @@ import p2p.utilities.common.Instructable;
  * @author {@literal p3100161 <Joseph Sakos>}
  */
 public class PeerTester extends CloseableThread {
+	
+	public enum Behavior {
+		
+		/**
+		 * Indicate that the peer is going to wait some time to give a chance to
+		 * other peers to communicate with him and ask for some file and also
+		 * waits for them to finish before closing. More peers could connect
+		 * while waiting for the transfers to finish. professional
+		 */
+		GENTLE,
+		/**
+		 * Indicates a behavior similar to gentle but does not accept peers
+		 * after the initial waiting time.
+		 */
+		PROFESSIONAL,
+		/**
+		 * Indicates that the peer is not going to wait at all just look for
+		 * some files, download them and close.
+		 */
+		FAST;
+		
+		public static Behavior getRandomBehavior() {
+			
+			final List<Behavior> list = Arrays.asList(Behavior.values());
+			
+			if (list.size() > 0) {
+				Collections.shuffle(list);
+				return list.get(0);
+			}
+			
+			return null;
+			
+		}
+		
+	}
 	
 	/**
 	 * The PeerTester.Command indicates the commands that can be passed from the
@@ -61,14 +96,14 @@ public class PeerTester extends CloseableThread {
 		 *             If no Command object can be associated with the given
 		 *             text.
 		 */
-		public static Command find(String text) throws NoSuchElementException {
+		public static Command find(final String text) throws NoSuchElementException {
 			
 			return Instructable.find(Command.class, text);
 		}
 		
 		private final String text;
 		
-		private Command(String text) {
+		private Command(final String text) {
 			
 			this.text = text;
 		}
@@ -98,6 +133,7 @@ public class PeerTester extends CloseableThread {
 		private int			no_successful_logins		= 0;
 		private int			no_successful_registrations	= 0;
 		private int			no_successful_logouts		= 0;
+		private int			no_requested_downloads		= 0;
 		
 		/**
 		 * Allocates a new TestablePeer object.
@@ -107,8 +143,14 @@ public class PeerTester extends CloseableThread {
 		 * @param name
 		 *            The name of this peer.
 		 */
-		public TestablePeer(ThreadGroup group, String name) {
+		public TestablePeer(final ThreadGroup group, final String name) {
 			super(group, name);
+		}
+		
+		public List<File> getAvailableFiles() {
+			
+			return this.available_files == null ? Collections.emptyList() : this.available_files;
+			
 		}
 		
 		/**
@@ -136,6 +178,11 @@ public class PeerTester extends CloseableThread {
 			return this.no_successful_registrations;
 		}
 		
+		public int getRequestedDownloads() {
+			
+			return this.no_requested_downloads;
+		}
+		
 		/**
 		 * @return Returns the user's credentials of this peer.
 		 */
@@ -152,21 +199,6 @@ public class PeerTester extends CloseableThread {
 		public boolean isUserCredentialsSet() {
 			
 			return this.user_credentials != null;
-		}
-		
-		public boolean setAvailableFiles(List<File> available_files) {
-			
-			if (this.isAlive()) return false;
-			
-			this.available_files = available_files;
-			
-			return true;
-		}
-		
-		public List<File> getAvailableFiles() {
-			
-			return this.available_files == null ? Collections.emptyList() : this.available_files;
-			
 		}
 		
 		/*
@@ -200,14 +232,23 @@ public class PeerTester extends CloseableThread {
 				this.no_successful_logins++;
 			}
 			
+			/*
+			 * Select a list of available files to download.
+			 */
 			List<String> filenames_to_download = Collections.emptyList();
-			List<String> shared_filenames = this.getSharedFiles().parallelStream().map(x -> x.getName()).distinct()
-			        .collect(Collectors.toList());
-			List<String> available_filenames = this.getAvailableFiles().parallelStream().map(x -> x.getName())
+			final List<String> shared_filenames = this.getSharedFiles().parallelStream().map(x -> x.getName())
+			        .distinct().collect(Collectors.toList());
+			final List<String> available_filenames = this.getAvailableFiles().parallelStream().map(x -> x.getName())
 			        .distinct().collect(Collectors.toList());
 			
+			/*
+			 * Keep only files that the peer doesn't have to the list.
+			 */
 			available_filenames.removeAll(shared_filenames);
 			
+			/*
+			 * Pick a random number of them to search and download.
+			 */
 			if (available_filenames.size() > 0) {
 				
 				Collections.shuffle(available_filenames);
@@ -216,29 +257,52 @@ public class PeerTester extends CloseableThread {
 				
 			}
 			
-			long peer_waiting_time = (new Random()).nextInt((int) (PeerTester.default_peer_waiting_interval.getMaximum()
-			        - PeerTester.default_peer_waiting_interval.getMinimum()))
+			/*
+			 * Select a random waiting time.
+			 */
+			final long peer_waiting_time = (new Random())
+			        .nextInt((int) (PeerTester.default_peer_waiting_interval.getMaximum()
+			                - PeerTester.default_peer_waiting_interval.getMinimum()))
 			        + PeerTester.default_peer_waiting_interval.getMinimum();
+			
+			/*
+			 * Develop a peers behavior at random.
+			 */
+			
+			final Behavior behavior = Behavior.getRandomBehavior();
+			
+			LoggerManager.tracedLog(Level.INFO, String.format("The peer adapted the %s behavior", behavior.toString())); //$NON-NLS-1$
 			
 			try {
 				
 				/*
-				 * Waits some time for other peers to initialize.
+				 * Wait some time for other peers to initialize and connect.
 				 */
-				
-				Thread.sleep(peer_waiting_time);
-				
-				for (String filename : filenames_to_download) {
-					this.addDownload(filename);
-				}
-				
-				while (CloseableThread.countActive(this.clients_group) > 0) {
-					
+				if (behavior != Behavior.FAST) {
 					Thread.sleep(peer_waiting_time);
 				}
 				
-			} catch (InterruptedException ex) {
+			} catch (final InterruptedException ex) {
 				LoggerManager.tracedLog(this, Level.WARNING, "The peer's test was interrupted.", ex); //$NON-NLS-1$
+			}
+			
+			/*
+			 * Try to download the selected files.
+			 */
+			for (final String filename : filenames_to_download) {
+				this.addDownload(filename);
+				this.no_requested_downloads++;
+			}
+			
+			if (behavior == Behavior.PROFESSIONAL) {
+				this.stopManager(true);
+			}
+			
+			while (true) {
+				if ((CloseableThread.countActive(this.clients_group) == 0)
+				        && ((behavior == Behavior.FAST) || (this.numberOfActiveServers() == 0))) {
+					break;
+				}
 			}
 			
 			if (this.logout()) {
@@ -249,10 +313,19 @@ public class PeerTester extends CloseableThread {
 				
 				this.close();
 				
-			} catch (IOException ex) {
+			} catch (final IOException ex) {
 				LoggerManager.tracedLog(this, Level.WARNING, "The peer could not be terminated properly.", ex); //$NON-NLS-1$
 			}
 			
+		}
+		
+		public boolean setAvailableFiles(final List<File> available_files) {
+			
+			if (this.isAlive()) return false;
+			
+			this.available_files = available_files;
+			
+			return true;
 		}
 		
 		/**
@@ -262,7 +335,7 @@ public class PeerTester extends CloseableThread {
 		 *            The credentials that are going to be associated.
 		 * @return True If the update was successful.
 		 */
-		public boolean setUserCredentials(Credentials user_credentials) {
+		public boolean setUserCredentials(final Credentials user_credentials) {
 			
 			if (this.isAlive()) return false;
 			
@@ -290,9 +363,9 @@ public class PeerTester extends CloseableThread {
 	 * Indicates the minimum number of sample files that are going to be copied
 	 * to the peer's shared directory before the execution.
 	 */
-	public static final int	min_files_sample_size = 0;
+	public static final int	min_files_sample_size = 2;
 	
-	public static final ValueRange default_peer_waiting_interval = ValueRange.of(5000, 6000);
+	public static final ValueRange default_peer_waiting_interval = ValueRange.of(3000, 6000);
 	
 	/**
 	 * Indicates the default directory of the databases.
@@ -315,7 +388,7 @@ public class PeerTester extends CloseableThread {
 	 * @param args
 	 *            The console arguments.
 	 */
-	public static void main(String[] args) {
+	public static void main(final String[] args) {
 		
 		int no_peers = PeerTester.default_no_peers;
 		int tempo = PeerTester.default_tempo;
@@ -348,7 +421,7 @@ public class PeerTester extends CloseableThread {
 				}
 			}
 			
-			File databases_directory = new File(new File(database_path).getParent());
+			final File databases_directory = new File(new File(database_path).getParent());
 			
 			/*
 			 * Check if the database's directory exist.
@@ -364,22 +437,22 @@ public class PeerTester extends CloseableThread {
 				 * Create a new ThreadGroup to add tests and execute them.
 				 */
 				
-				ThreadGroup testers = new ThreadGroup("Testers"); //$NON-NLS-1$
+				final ThreadGroup testers = new ThreadGroup("Testers"); //$NON-NLS-1$
 				
 				try (PeerTester tester = new PeerTester(testers, "Tester", database_path, no_peers, tempo);) { //$NON-NLS-1$
 					
 					tester.start();
 					tester.join();
 					
-				} catch (IOException ex) {
+				} catch (final IOException ex) {
 					LoggerManager.tracedLog(Level.SEVERE, "An IOException occurred during the test.", ex); //$NON-NLS-1$
-				} catch (InterruptedException ex) {
+				} catch (final InterruptedException ex) {
 					LoggerManager.tracedLog(Level.WARNING, "The test was interrupted.", ex); //$NON-NLS-1$
 				}
 				
 			}
 			
-		} catch (NoSuchElementException ex) {
+		} catch (final NoSuchElementException ex) {
 			LoggerManager.tracedLog(Level.SEVERE, "Unrecognized command line argument", ex); //$NON-NLS-1$
 		}
 		
@@ -405,13 +478,14 @@ public class PeerTester extends CloseableThread {
 	 * @param tempo
 	 *            The delay in milliseconds between time delicate Processes.
 	 */
-	public PeerTester(ThreadGroup group, String name, String database_path, int no_peers, int tempo) {
+	public PeerTester(final ThreadGroup group, final String name, final String database_path, final int no_peers,
+	        final int tempo) {
 		super(group, name);
 		
 		this.no_peers = no_peers > 0 ? no_peers : PeerTester.default_no_peers;
 		this.tempo = tempo >= 0 ? tempo : PeerTester.default_tempo;
 		
-		File database_file = new File(database_path);
+		final File database_file = new File(database_path);
 		this.database_path = database_file.exists() && database_file.isFile() ? database_path
 		        : PeerTester.default_database_path;
 		
@@ -452,18 +526,18 @@ public class PeerTester extends CloseableThread {
 				final InetSocketAddress tracker_socket_address = tracker.getServerAddress();
 				if (tracker_socket_address != null) {
 					
-					ArrayDeque<TestablePeer> peers = new ArrayDeque<>();
+					final ArrayDeque<TestablePeer> peers = new ArrayDeque<>();
 					
 					for (int i = 0; i < this.no_peers; i++) {
 						
-						Credentials user_credentials = new Credentials(String.format("user-%d", i), null); //$NON-NLS-1$
+						final Credentials user_credentials = new Credentials(String.format("user-%d", i), null); //$NON-NLS-1$
 						
 						/*
 						 * The close() method of the PeerTester makes sure to
 						 * prevent any memory leaks from the Peer objects.
 						 */
 						@SuppressWarnings("resource")
-						TestablePeer peer = new TestablePeer(this.peers_group,
+						final TestablePeer peer = new TestablePeer(this.peers_group,
 						        String.format("%s.Peer-%d", this.getName(), i)); //$NON-NLS-1$
 						
 						/*
@@ -501,15 +575,21 @@ public class PeerTester extends CloseableThread {
 						Thread.sleep(PeerTester.default_sleep_time);
 					}
 					
-					List<File> shared_files = peers.parallelStream().filter(x -> x.isSharedDirecorySet())
+					final List<File> shared_files = peers.parallelStream().filter(x -> x.isSharedDirecorySet())
 					        .flatMap(x -> Arrays.asList(new File(x.getSharedDirectory()).listFiles()).parallelStream())
 					        .distinct().collect(Collectors.toList());
-					long count_successful_peer_logins = peers.parallelStream().filter(x -> x.getSuccessfulLogins() > 0)
-					        .count();
-					long count_successful_peer_registrations = peers.parallelStream()
+					final long count_successful_peer_logins = peers.parallelStream()
+					        .filter(x -> x.getSuccessfulLogins() > 0).count();
+					final long count_successful_peer_registrations = peers.parallelStream()
 					        .filter(x -> x.getSuccessfulRegistrations() > 0).count();
-					long count_successful_peer_logouts = peers.parallelStream()
+					final long count_successful_peer_logouts = peers.parallelStream()
 					        .filter(x -> x.getSuccessfulLogouts() > 0).count();
+					final long count_requested_downloads = peers.parallelStream().map(x -> x.getRequestedDownloads())
+					        .reduce(0, (x, y) -> x + y);
+					final long count_successful_downloads = peers.parallelStream().map(x -> x.getCompletedDownloads())
+					        .reduce((long) 0, (x, y) -> x + y);
+					final List<File> downloaded_files = peers.parallelStream()
+					        .flatMap(x -> x.getDownloadedFiles().stream()).collect(Collectors.toList());
 					
 					LoggerManager.tracedLog(this, Level.INFO,
 					        String.format("%d peer(s) were able to register successfully.", //$NON-NLS-1$
@@ -520,6 +600,14 @@ public class PeerTester extends CloseableThread {
 					LoggerManager.tracedLog(this, Level.INFO,
 					        String.format("%d peer(s) were able to logout successfully.", //$NON-NLS-1$
 					                count_successful_peer_logouts));
+					LoggerManager.tracedLog(this, Level.INFO,
+					        String.format("%d from %d downloads completed successfully.", //$NON-NLS-1$
+					                count_successful_downloads, count_requested_downloads));
+					
+					LoggerManager.tracedLog(this, Level.INFO,
+					        String.format("The following files have been downloaded: %s", //$NON-NLS-1$
+					                downloaded_files.stream().map(x -> x.getAbsolutePath()).collect(Collectors.toList())
+					                        .toString()));
 					
 					LoggerManager.tracedLog(this, Level.INFO,
 					        String.format("The initial sample of shared files contained %d files.", //$NON-NLS-1$
@@ -534,9 +622,9 @@ public class PeerTester extends CloseableThread {
 				
 			}
 			
-		} catch (IOException ex) {
+		} catch (final IOException ex) {
 			LoggerManager.tracedLog(this, Level.SEVERE, "An IOException occurred during the test.", ex); //$NON-NLS-1$
-		} catch (InterruptedException ex) {
+		} catch (final InterruptedException ex) {
 			LoggerManager.tracedLog(this, Level.WARNING, "The test was interrupted.", ex); //$NON-NLS-1$
 		} finally {
 			
@@ -544,7 +632,7 @@ public class PeerTester extends CloseableThread {
 				
 				this.close();
 				
-			} catch (IOException ex) {
+			} catch (final IOException ex) {
 				LoggerManager.tracedLog(this, Level.WARNING, "The tracker could not be terminated properly.", ex); //$NON-NLS-1$
 			}
 			

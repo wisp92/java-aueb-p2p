@@ -16,7 +16,7 @@ import p2p.utilities.LoggerManager;
  * @author {@literal p3100161 <Joseph Sakos>}
  */
 public abstract class CloseableThread extends Thread implements Closeable {
-	
+
 	/**
 	 * Returns the number of active threads of a {@link ThreadGroup} object.
 	 *
@@ -25,11 +25,11 @@ public abstract class CloseableThread extends Thread implements Closeable {
 	 * @return The number of active thread in the group.
 	 */
 	public static final int countActive(final ThreadGroup group) {
-		
+
 		return CloseableThread.getActive(group).size();
-		
+
 	}
-	
+
 	/**
 	 * Returns the active threads of a {@link ThreadGroup} object.
 	 *
@@ -38,12 +38,12 @@ public abstract class CloseableThread extends Thread implements Closeable {
 	 * @return An {@link ArrayDeque} object of the threads.
 	 */
 	public static final List<Thread> getActive(final ThreadGroup group) {
-		
-		return Thread.getAllStackTraces().keySet().parallelStream().filter(x -> x.getThreadGroup() == group)
-		        .collect(Collectors.toList());
-		
+
+		return Thread.getAllStackTraces().keySet().parallelStream()
+		        .filter(x -> (x.getThreadGroup() == group) && !x.isInterrupted()).collect(Collectors.toList());
+
 	}
-	
+
 	/**
 	 * Interrupts the active threads of a {@link ThreadGroup} object.
 	 *
@@ -51,11 +51,11 @@ public abstract class CloseableThread extends Thread implements Closeable {
 	 *            The group that contains the threads to be interrupted.
 	 */
 	public static final void interrupt(final ThreadGroup group) {
-		
+
 		CloseableThread.getActive(group).parallelStream().forEach(x -> x.interrupt());
-		
+
 	}
-	
+
 	/**
 	 * Allocates a new CloseableThread object.
 	 *
@@ -67,24 +67,24 @@ public abstract class CloseableThread extends Thread implements Closeable {
 	public CloseableThread(final ThreadGroup group, final String name) {
 		super(group, name);
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see java.lang.Thread#interrupt()
 	 */
 	@Override
 	public void interrupt() {
-		
+
 		super.interrupt();
-		
+
 		try {
-			
+
 			this.close();
-			
+
 		} catch (final IOException ex) {
 			LoggerManager.tracedLog(this, Level.WARNING, "The thread could not be closed properly.", ex); //$NON-NLS-1$
 		}
-		
+
 	}
-	
+
 }

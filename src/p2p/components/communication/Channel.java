@@ -5,9 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.PrimitiveIterator;
 import java.util.Set;
 import java.util.logging.Level;
@@ -28,9 +26,9 @@ import p2p.utilities.LoggerManager;
  * @author {@literal p3100161 <Joseph Sakos>}
  */
 public abstract class Channel extends CloseableThread {
-	
+
 	public static final long default_waiting_time_for_response = 1000;
-	
+
 	/**
 	 * Sends a check alive to the socket and return its response time.
 	 *
@@ -39,10 +37,10 @@ public abstract class Channel extends CloseableThread {
 	 * @return The response time of the socket address.
 	 */
 	public static final Long getResponseTime(final InetSocketAddress socket_address) {
-		
+
 		return Channel.getResponseTime(socket_address, Channel.default_waiting_time_for_response);
 	}
-	
+
 	/**
 	 * Sends a check alive to the socket and return its response time.
 	 *
@@ -53,15 +51,15 @@ public abstract class Channel extends CloseableThread {
 	 * @return The response time of the socket address.
 	 */
 	public static final Long getResponseTime(final InetSocketAddress socket_address, final long max_waiting_time) {
-		
+
 		final Thread current_thread = Thread.currentThread();
 		final ThreadGroup group = new ThreadGroup(current_thread.getThreadGroup(),
 		        String.format("%s.CheckAliveClients", current_thread.getName())); //$NON-NLS-1$
-		
+
 		return Channel.getResponseTime(group, String.format("%s.CheckAlive", current_thread.getName()), //$NON-NLS-1$
 		        socket_address, max_waiting_time);
 	}
-	
+
 	/**
 	 * Sends check alive request to all provided address in parallel and return
 	 * their response times sorted.
@@ -72,10 +70,10 @@ public abstract class Channel extends CloseableThread {
 	 */
 	public static final List<Pair<InetSocketAddress, Long>> getResponseTime(
 	        final Set<InetSocketAddress> address_batch) {
-		
+
 		return Channel.getResponseTime(address_batch, Channel.default_waiting_time_for_response);
 	}
-	
+
 	/**
 	 * Sends check alive request to all provided address in parallel and return
 	 * their response times sorted.
@@ -88,42 +86,34 @@ public abstract class Channel extends CloseableThread {
 	 */
 	public static final List<Pair<InetSocketAddress, Long>> getResponseTime(final Set<InetSocketAddress> address_batch,
 	        final long max_waiting_time) {
-		
+
 		final Thread current_thread = Thread.currentThread();
 		final ThreadGroup group = new ThreadGroup(current_thread.getThreadGroup(),
 		        String.format("%s.CheckAliveClients", current_thread.getName())); //$NON-NLS-1$
 		final PrimitiveIterator.OfInt it = IntStream.range(0, address_batch.size()).iterator();
-		
+
 		try {
-			
+
 			/*
 			 * Enumerate socket addresses before calculating their response time
 			 * and sort them.
 			 */
-			Map<InetSocketAddress, Integer> enumerated_addresses = address_batch.stream()
-			        .collect(Collectors.toMap(x -> x, x -> it.next()));
-			System.out.println(enumerated_addresses);
-			Map<InetSocketAddress, Long> unordered_response_times = enumerated_addresses.entrySet().parallelStream()
+			return address_batch.stream().collect(Collectors.toMap(x -> x, x -> it.next())).entrySet().parallelStream()
 			        .collect(Collectors.toMap(x -> x.getKey(),
 			                x -> Channel.getResponseTime(group,
 			                        String.format("%s.CheckAlive-%d", current_thread.getName(), //$NON-NLS-1$
 			                                x.getValue()),
-			                        x.getKey(), max_waiting_time)));
-			System.out.println(unordered_response_times);
-			List<Pair<InetSocketAddress, Long>> ordered_response_times = unordered_response_times.entrySet()
-			        .parallelStream().filter(x -> x.getValue() != null)
+			                        x.getKey(), max_waiting_time)))
+			        .entrySet().parallelStream().filter(x -> x.getValue() <= max_waiting_time)
 			        .sorted((x, y) -> x.getValue().compareTo(y.getValue()))
 			        .map(x -> new Pair<>(x.getKey(), x.getValue())).collect(Collectors.toList());
-			System.out.println(ordered_response_times);
-			
-			return ordered_response_times;
-			
+
 		} finally {
 			CloseableThread.interrupt(group);
 		}
-		
+
 	}
-	
+
 	/**
 	 * Try to send a check alive request to the specified socket.
 	 *
@@ -137,54 +127,52 @@ public abstract class Channel extends CloseableThread {
 	 *            tracker's socket.
 	 * @param max_waiting_time
 	 *            The maximum time to wait for a reply before failing.
-	 * @return The response time of the server or null in case of a failure. If
-	 *         the return time is bigger than the maximum waiting time specified
-	 *         then a timeout has occurred.
+	 * @return The response time of the server or a value greater than the
+	 *         maximum waiting time in case of a time or a failure.
 	 */
 	public static final Long getResponseTime(final ThreadGroup group, final String name,
 	        final InetSocketAddress socket_address, final long max_waiting_time) {
-		
+
 		try (CheckAliveClient client_channel = new CheckAliveClient(group, name, socket_address)) { // $NON-NLS-1$
-			
+
 			final long current_time = System.currentTimeMillis();
 			client_channel.start();
 			client_channel.join(max_waiting_time);
 			final long response_time = System.currentTimeMillis() - current_time;
-			
+
 			if (client_channel.getStatus() == ClientChannel.Status.SUCCESSFULL) {
-				
+
 				LoggerManager.tracedLog(Level.FINE, String.format("The server <%s> responded in %d milliseconds.", //$NON-NLS-1$
 				        socket_address.toString(), response_time));
-				
 				return response_time;
-				
+
 			}
-			
+
 			LoggerManager.tracedLog(Level.FINE, String.format("The server <%s> failed to respond in %d milliseconds.", //$NON-NLS-1$
 			        socket_address.toString(), max_waiting_time));
-			
+
 			return max_waiting_time + 1;
-			
+
 		} catch (@SuppressWarnings("unused") final IOException ex) {
-			
+
 			LoggerManager.tracedLog(Level.FINE, String.format("The server <%s> is probably down.", //$NON-NLS-1$
 			        socket_address.toString(), max_waiting_time));
-			
+
 		} catch (@SuppressWarnings("unused") final InterruptedException ex) {
-			
+
 			LoggerManager.tracedLog(Level.WARNING, "The check alive request was interrupted."); //$NON-NLS-1$
-			
+
 		}
-		
-		return null;
-		
+
+		return Long.MAX_VALUE;
+
 	}
-	
+
 	/**
 	 * The local socket associated with channel.
 	 */
 	protected final Socket socket;
-	
+
 	/**
 	 * Allocates a new Channel object by binding a {@link Socket} object.
 	 *
@@ -202,10 +190,10 @@ public abstract class Channel extends CloseableThread {
 	public Channel(final ThreadGroup group, final String name, final InetSocketAddress socket_address)
 	        throws IOException {
 		super(group, name);
-		
+
 		this.socket = new Socket(socket_address.getAddress(), socket_address.getPort());
 	}
-	
+
 	/**
 	 * Allocates a new Channel object.
 	 *
@@ -218,23 +206,23 @@ public abstract class Channel extends CloseableThread {
 	 */
 	public Channel(final ThreadGroup group, final String name, final Socket socket) {
 		super(group, name);
-		
+
 		this.socket = socket;
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see java.io.Closeable#close()
 	 */
 	@Override
 	public void close() throws IOException {
-		
+
 		if (!this.socket.isClosed()) {
 			this.socket.close();
 		}
-		
+
 	}
-	
+
 	/**
 	 * Implements a communication with the other end of the connection.
 	 *
@@ -245,7 +233,7 @@ public abstract class Channel extends CloseableThread {
 	 *             If the execution of the thread is interrupted.
 	 */
 	protected abstract void communicate() throws IOException, InterruptedException;
-	
+
 	/**
 	 * @return An {@link ObjectInputStream} object based on the local socket's
 	 *         input stream.
@@ -253,10 +241,10 @@ public abstract class Channel extends CloseableThread {
 	 *             If an error occurs during the allocation of the stream.
 	 */
 	protected final ObjectInputStream getInputStream() throws IOException {
-		
+
 		return new ObjectInputStream(this.socket.getInputStream());
 	}
-	
+
 	/**
 	 * @return An {@link ObjectOutputStream} object based on the socket's output
 	 *         stream. The {@link ObjectOutputStream#writeObject writeObject()}
@@ -266,9 +254,9 @@ public abstract class Channel extends CloseableThread {
 	 *             If an error occurs during the allocation of the stream.
 	 */
 	protected final ObjectOutputStream getOutputStream() throws IOException {
-		
+
 		return new ObjectOutputStream(this.socket.getOutputStream()) {
-			
+
 			/*
 			 * (non-Javadoc)
 			 * @see java.io.ObjectOutputStream#writeObjectOverride(java.
@@ -276,53 +264,53 @@ public abstract class Channel extends CloseableThread {
 			 */
 			@Override
 			protected void writeObjectOverride(final Object obj) throws IOException {
-				
+
 				super.writeObject(obj);
 				super.flush();
 			}
-			
+
 		};
-		
+
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see java.lang.Thread#run()
 	 */
 	@Override
 	public void run() {
-		
+
 		try {
-			
+
 			if (!this.socket.isClosed()) {
-				
+
 				LoggerManager.tracedLog(this, Level.FINE,
 				        String.format("A new communication started (%d active in group <%s>).", //$NON-NLS-1$
 				                CloseableThread.countActive(this.getThreadGroup()), this.getThreadGroup().getName()));
-				
+
 				this.communicate();
 			}
-			
+
 		} catch (final IOException ex) {
 			LoggerManager.tracedLog(this, Level.SEVERE, "An IOException occurred during the communication.", ex); //$NON-NLS-1$
 		} catch (final InterruptedException ex) {
 			LoggerManager.tracedLog(this, Level.WARNING, "The communication was interrupted.", ex); //$NON-NLS-1$
 		} finally {
-			
+
 			try {
-				
+
 				this.close();
-				
+
 				LoggerManager.tracedLog(this, Level.FINE,
 				        String.format("The communication ended (approximately %d remaining in group <%s>).", //$NON-NLS-1$
 				                CloseableThread.countActive(this.getThreadGroup()), this.getThreadGroup().getName()));
-				
+
 			} catch (final IOException ex) {
 				LoggerManager.tracedLog(this, Level.WARNING, "The channel could not be closed properly.", ex); //$NON-NLS-1$
 			}
-			
+
 		}
-		
+
 	}
-	
+
 }

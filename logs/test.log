@@ -1,155 +1,269 @@
-May 03, 2017 6:34:55 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager) tracedLog
-FINE: The server started listening for incoming connection
-May 03, 2017 6:34:55 PM p2p.components.peers.Peer (Tester.Peer-0) setTracker
-INFO: The tracker's description updated to </0.0.0.0:56980>
-May 03, 2017 6:34:55 PM p2p.utilities.testing.TestHelper (Tester.Peer-0) newSharedDirectory
+May 04, 2017 2:40:25 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-0) run
+INFO: The tracker's description updated to </0.0.0.0:38368>
+May 04, 2017 2:40:26 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-0) run
 INFO: The shared directory's path changed to <shared/peers/Tester.Peer-0_shared>.
-May 03, 2017 6:34:55 PM p2p.components.peers.Peer (Tester.Peer-1) setTracker
-INFO: The tracker's description updated to </0.0.0.0:56980>
-May 03, 2017 6:34:55 PM p2p.utilities.testing.TestHelper (Tester.Peer-1) newSharedDirectory
+May 04, 2017 2:40:26 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-1) run
+INFO: The tracker's description updated to </0.0.0.0:38368>
+May 04, 2017 2:40:26 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-1) run
 INFO: The shared directory's path changed to <shared/peers/Tester.Peer-1_shared>.
-May 03, 2017 6:34:55 PM p2p.utilities.LoggerManager (Tester) tracedLog
-INFO: 2 from 2 active peers
-May 03, 2017 6:34:55 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager) tracedLog
-FINE: A new connection started (1 active server(s) currently handled by the manager).
-May 03, 2017 6:34:55 PM p2p.utilities.LoggerManager (Tester.Peer-1.Login) tracedLog
-FINE: A new communication started (1 active in group <Tester.Peer-1.Clients>).
-May 03, 2017 6:34:55 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager.Server-0) tracedLog
-FINE: A new communication started (1 active in group <Tester.Tracker.ServerManager.Servers>).
-May 03, 2017 6:34:55 PM p2p.utilities.LoggerManager (Tester.Peer-0.Login) tracedLog
-FINE: A new communication started (1 active in group <Tester.Peer-0.Clients>).
-May 03, 2017 6:34:55 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager) tracedLog
-FINE: A new connection started (2 active server(s) currently handled by the manager).
-May 03, 2017 6:34:55 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager.Server-1) tracedLog
-FINE: A new communication started (2 active in group <Tester.Tracker.ServerManager.Servers>).
-May 03, 2017 6:34:55 PM p2p.components.peers.PeerLoginClient (Tester.Peer-0.Login) communicate
-FINE: A new login request was sent through the channel.
-May 03, 2017 6:34:55 PM p2p.components.peers.PeerLoginClient (Tester.Peer-1.Login) communicate
-FINE: A new login request was sent through the channel.
-May 03, 2017 6:34:56 PM p2p.utilities.LoggerManager (Tester.Peer-1.ServerManager) tracedLog
-FINE: The server started listening for incoming connection
-May 03, 2017 6:34:56 PM p2p.utilities.LoggerManager (Tester.Peer-0.ServerManager) tracedLog
-FINE: The server started listening for incoming connection
-May 03, 2017 6:34:56 PM p2p.components.communication.ServerChannel (Tester.Tracker.ServerManager.Server-1) communicate
-FINE: A new session with id <1838444023> was created for the user with username <user-0>.
-May 03, 2017 6:34:56 PM p2p.components.communication.ServerChannel (Tester.Tracker.ServerManager.Server-0) communicate
-FINE: A new session with id <1263114345> was created for the user with username <user-1>.
-May 03, 2017 6:34:56 PM p2p.utilities.LoggerManager (Tester.Peer-1.Login) tracedLog
-FINE: The communication ended (approximately 1 remaining in group <Tester.Peer-1.Clients>).
-May 03, 2017 6:34:56 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager.Server-1) tracedLog
-FINE: The communication ended (approximately 2 remaining in group <Tester.Tracker.ServerManager.Servers>).
-May 03, 2017 6:34:56 PM p2p.utilities.LoggerManager (Tester.Peer-0.Login) tracedLog
-FINE: The communication ended (approximately 1 remaining in group <Tester.Peer-0.Clients>).
-May 03, 2017 6:34:56 PM p2p.components.peers.Peer (Tester.Peer-0) login
-INFO: The peer logged in to the tracker with session id <1838444023> and credentials <user-0:>.
-May 03, 2017 6:34:56 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager.Server-0) tracedLog
-FINE: The communication ended (approximately 2 remaining in group <Tester.Tracker.ServerManager.Servers>).
-May 03, 2017 6:34:56 PM p2p.components.peers.Peer (Tester.Peer-1) login
-INFO: The peer logged in to the tracker with session id <1263114345> and credentials <user-1:>.
-May 03, 2017 6:34:56 PM p2p.utilities.LoggerManager (Tester) tracedLog
-INFO: 2 from 2 active peers
-May 03, 2017 6:34:57 PM p2p.utilities.LoggerManager (Tester) tracedLog
-INFO: 2 from 2 active peers
-May 03, 2017 6:34:58 PM p2p.utilities.LoggerManager (Tester) tracedLog
-INFO: 2 from 2 active peers
-May 03, 2017 6:34:59 PM p2p.utilities.LoggerManager (Tester) tracedLog
-INFO: 2 from 2 active peers
-May 03, 2017 6:35:00 PM p2p.utilities.LoggerManager (Tester) tracedLog
-INFO: 2 from 2 active peers
-May 03, 2017 6:35:01 PM p2p.utilities.LoggerManager (Tester) tracedLog
-INFO: 2 from 2 active peers
-May 03, 2017 6:35:01 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager) tracedLog
-FINE: A new connection started (3 active server(s) currently handled by the manager).
-May 03, 2017 6:35:01 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager.Server-2) tracedLog
-FINE: A new communication started (3 active in group <Tester.Tracker.ServerManager.Servers>).
-May 03, 2017 6:35:01 PM p2p.components.communication.Channel (Tester.Peer-1.SimpleDownload-aueb1.jpeg.SearchClient) run
-FINE: A new communication started (0 active in group <Tester.Peer-1.SimpleDownload-aueb1.jpeg.Clients>).
-May 03, 2017 6:35:01 PM p2p.components.communication.Channel (Tester.Peer-1.SimpleDownload-aueb1.jpeg.SearchClient) run
+May 04, 2017 2:40:26 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-2) run
+INFO: The tracker's description updated to </0.0.0.0:38368>
+May 04, 2017 2:40:26 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-2) run
+INFO: The shared directory's path changed to <shared/peers/Tester.Peer-2_shared>.
+May 04, 2017 2:40:26 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-3) run
+INFO: The tracker's description updated to </0.0.0.0:38368>
+May 04, 2017 2:40:26 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-3) run
+INFO: The shared directory's path changed to <shared/peers/Tester.Peer-3_shared>.
+May 04, 2017 2:40:26 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-4) run
+INFO: The tracker's description updated to </0.0.0.0:38368>
+May 04, 2017 2:40:26 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-4) run
+INFO: The shared directory's path changed to <shared/peers/Tester.Peer-4_shared>.
+May 04, 2017 2:40:26 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-5) run
+INFO: The tracker's description updated to </0.0.0.0:38368>
+May 04, 2017 2:40:26 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-5) run
+INFO: The shared directory's path changed to <shared/peers/Tester.Peer-5_shared>.
+May 04, 2017 2:40:26 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-6) run
+INFO: The tracker's description updated to </0.0.0.0:38368>
+May 04, 2017 2:40:26 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-6) run
+INFO: The shared directory's path changed to <shared/peers/Tester.Peer-6_shared>.
+May 04, 2017 2:40:26 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-7) run
+INFO: The tracker's description updated to </0.0.0.0:38368>
+May 04, 2017 2:40:26 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-7) run
+INFO: The shared directory's path changed to <shared/peers/Tester.Peer-7_shared>.
+May 04, 2017 2:40:26 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-8) run
+INFO: The tracker's description updated to </0.0.0.0:38368>
+May 04, 2017 2:40:26 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-8) run
+INFO: The shared directory's path changed to <shared/peers/Tester.Peer-8_shared>.
+May 04, 2017 2:40:26 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-9) run
+INFO: The tracker's description updated to </0.0.0.0:38368>
+May 04, 2017 2:40:26 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-9) run
+INFO: The shared directory's path changed to <shared/peers/Tester.Peer-9_shared>.
+May 04, 2017 2:40:26 AM p2p.utilities.testing.PeerTester (Tester) run
+INFO: 10 from 10 active peers
+May 04, 2017 2:40:27 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-7) run
+INFO: The peer logged in to the tracker with session id <308922252> and credentials <user-7:>.
+May 04, 2017 2:40:27 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-3) run
+INFO: The peer logged in to the tracker with session id <-1671502366> and credentials <user-3:>.
+May 04, 2017 2:40:27 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-0) run
+INFO: The peer logged in to the tracker with session id <261512873> and credentials <user-0:>.
+May 04, 2017 2:40:27 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-5) run
+INFO: The peer logged in to the tracker with session id <-285202816> and credentials <user-5:>.
+May 04, 2017 2:40:27 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-8) run
+INFO: The peer logged in to the tracker with session id <-1794570155> and credentials <user-8:>.
+May 04, 2017 2:40:27 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-4) run
+INFO: The peer logged in to the tracker with session id <1591856204> and credentials <user-4:>.
+May 04, 2017 2:40:27 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-6) run
+INFO: The peer logged in to the tracker with session id <1224837683> and credentials <user-6:>.
+May 04, 2017 2:40:27 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-2) run
+INFO: The peer logged in to the tracker with session id <74547313> and credentials <user-2:>.
+May 04, 2017 2:40:27 AM p2p.utilities.testing.PeerTester$TestablePeer run
+INFO: The peer adapted the PROFESSIONAL behavior
+May 04, 2017 2:40:27 AM p2p.utilities.testing.PeerTester$TestablePeer run
+INFO: The peer adapted the FAST behavior
+May 04, 2017 2:40:27 AM p2p.utilities.testing.PeerTester$TestablePeer run
+INFO: The peer adapted the PROFESSIONAL behavior
+May 04, 2017 2:40:27 AM p2p.utilities.testing.PeerTester$TestablePeer run
+INFO: The peer adapted the FAST behavior
+May 04, 2017 2:40:27 AM p2p.utilities.testing.PeerTester$TestablePeer run
+INFO: The peer adapted the GENTLE behavior
+May 04, 2017 2:40:27 AM p2p.utilities.testing.PeerTester$TestablePeer run
+INFO: The peer adapted the GENTLE behavior
+May 04, 2017 2:40:27 AM p2p.utilities.testing.PeerTester$TestablePeer run
+INFO: The peer adapted the PROFESSIONAL behavior
+May 04, 2017 2:40:27 AM p2p.utilities.testing.PeerTester$TestablePeer run
+INFO: The peer adapted the PROFESSIONAL behavior
+May 04, 2017 2:40:27 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-9) run
+INFO: The peer logged in to the tracker with session id <-410129992> and credentials <user-9:>.
+May 04, 2017 2:40:27 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-1) run
+INFO: The peer logged in to the tracker with session id <681213229> and credentials <user-1:>.
+May 04, 2017 2:40:27 AM p2p.utilities.testing.PeerTester$TestablePeer run
+INFO: The peer adapted the FAST behavior
+May 04, 2017 2:40:27 AM p2p.utilities.testing.PeerTester$TestablePeer run
+INFO: The peer adapted the FAST behavior
+May 04, 2017 2:40:27 AM p2p.components.peers.DownloadScheduler run
+INFO: File <CS_StudyGuide2016-17.pdf> was scheduled for download.
+May 04, 2017 2:40:27 AM p2p.utilities.testing.PeerTester (Tester) run
+INFO: 10 from 10 active peers
+May 04, 2017 2:40:28 AM p2p.components.peers.SearchClient (Tester.Peer-6.SimpleDownload-CS_StudyGuide2016-17.pdf.SearchClient) run
+FINE: A new communication started (0 active in group <Tester.Peer-6.SimpleDownload-CS_StudyGuide2016-17.pdf.Clients>).
+May 04, 2017 2:40:28 AM p2p.components.peers.SearchClient (Tester.Peer-6.SimpleDownload-CS_StudyGuide2016-17.pdf.SearchClient) run
+FINE: A new search request for the file <CS_StudyGuide2016-17.pdf> was sent through the channel.
+May 04, 2017 2:40:28 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-3) run
+INFO: The peer ended the session with id <-1671502366> from the server's side.
+May 04, 2017 2:40:28 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-9) run
+INFO: The peer ended the session with id <-410129992> from the server's side.
+May 04, 2017 2:40:28 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-1) run
+INFO: The peer ended the session with id <681213229> from the server's side.
+May 04, 2017 2:40:28 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-3) run
+INFO: The peer ended the session from the client's side.
+May 04, 2017 2:40:28 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-9) run
+INFO: The peer ended the session from the client's side.
+May 04, 2017 2:40:28 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-1) run
+INFO: The peer ended the session from the client's side.
+May 04, 2017 2:40:28 AM p2p.components.peers.SearchClient (Tester.Peer-6.SimpleDownload-CS_StudyGuide2016-17.pdf.SearchClient) run
+FINE: The communication ended (approximately 0 remaining in group <Tester.Peer-6.SimpleDownload-CS_StudyGuide2016-17.pdf.Clients>).
+May 04, 2017 2:40:28 AM p2p.components.peers.DownloadScheduler run
+FINE: The server </127.0.0.1:51928> responded in 63 milliseconds.
+May 04, 2017 2:40:28 AM p2p.components.peers.DownloadScheduler run
+FINE: The server </127.0.0.1:53401> responded in 77 milliseconds.
+May 04, 2017 2:40:28 AM p2p.components.peers.DownloadScheduler run
+FINE: The file <CS_StudyGuide2016-17.pdf> was found in the following peers, appearing in ascending order based on their response time: [(/127.0.0.1:51928, 63), (/127.0.0.1:47510, 64), (/127.0.0.1:53401, 77)]
+May 04, 2017 2:40:28 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-6) run
+INFO: The peer ended the session with id <1224837683> from the server's side.
+May 04, 2017 2:40:28 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-6) run
+INFO: The peer ended the session from the client's side.
+May 04, 2017 2:40:28 AM p2p.utilities.testing.PeerTester (Tester) run
+INFO: 6 from 10 active peers
+May 04, 2017 2:40:29 AM p2p.utilities.testing.PeerTester (Tester) run
+INFO: 6 from 10 active peers
+May 04, 2017 2:40:31 AM p2p.utilities.testing.PeerTester (Tester) run
+INFO: 6 from 10 active peers
+May 04, 2017 2:40:31 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-8) run
+INFO: The peer ended the session with id <-1794570155> from the server's side.
+May 04, 2017 2:40:31 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-8) run
+INFO: The peer ended the session from the client's side.
+May 04, 2017 2:40:32 AM p2p.utilities.testing.PeerTester (Tester) run
+INFO: 5 from 10 active peers
+May 04, 2017 2:40:32 AM p2p.components.peers.DownloadScheduler run
+INFO: File <aueb3.jpg> was scheduled for download.
+May 04, 2017 2:40:32 AM p2p.components.peers.DownloadScheduler run
+INFO: File <aueb1.jpeg> was scheduled for download.
+May 04, 2017 2:40:32 AM p2p.components.peers.SearchClient (Tester.Peer-5.SimpleDownload-aueb1.jpeg.SearchClient) run
+FINE: A new communication started (0 active in group <Tester.Peer-5.SimpleDownload-aueb1.jpeg.Clients>).
+May 04, 2017 2:40:32 AM p2p.components.peers.SearchClient (Tester.Peer-5.SimpleDownload-aueb1.jpeg.SearchClient) run
 FINE: A new search request for the file <aueb1.jpeg> was sent through the channel.
-May 03, 2017 6:35:01 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager) tracedLog
-FINE: A new connection started (2 active server(s) currently handled by the manager).
-May 03, 2017 6:35:01 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager.Server-3) tracedLog
-FINE: A new communication started (2 active in group <Tester.Tracker.ServerManager.Servers>).
-May 03, 2017 6:35:01 PM p2p.utilities.LoggerManager (Tester.Peer-0.Login) tracedLog
-FINE: A new communication started (1 active in group <Tester.Peer-0.Clients>).
-May 03, 2017 6:35:01 PM p2p.components.peers.PeerLogoutClient (Tester.Peer-0.Login) communicate
-FINE: A new logout request was sent through the channel.
-May 03, 2017 6:35:01 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager.Server-2) tracedLog
-FINE: The communication ended (approximately 2 remaining in group <Tester.Tracker.ServerManager.Servers>).
-May 03, 2017 6:35:02 PM p2p.components.communication.Channel (Tester.Peer-1.SimpleDownload-aueb1.jpeg.SearchClient) run
-FINE: The communication ended (approximately 0 remaining in group <Tester.Peer-1.SimpleDownload-aueb1.jpeg.Clients>).
-May 03, 2017 6:35:02 PM p2p.components.communication.ServerChannel (Tester.Tracker.ServerManager.Server-3) communicate
-FINE: The session with id <1838444023> was terminated by user's request.
-May 03, 2017 6:35:02 PM p2p.utilities.LoggerManager (Tester.Peer-0.Login) tracedLog
-FINE: The communication ended (approximately 1 remaining in group <Tester.Peer-0.Clients>).
-May 03, 2017 6:35:02 PM p2p.components.peers.Peer (Tester.Peer-0) logout
-INFO: The peer ended the session with id <1838444023> from the server's side.
-May 03, 2017 6:35:02 PM p2p.utilities.LoggerManager (Tester.Peer-0.ServerManager) tracedLog
-FINE: A server stopped listening for incoming connections (0 active server remain and reducing).
-May 03, 2017 6:35:02 PM p2p.components.peers.Peer (Tester.Peer-0) logout
+May 04, 2017 2:40:32 AM p2p.components.peers.SearchClient (Tester.Peer-5.SimpleDownload-aueb3.jpg.SearchClient) run
+FINE: A new communication started (0 active in group <Tester.Peer-5.SimpleDownload-aueb3.jpg.Clients>).
+May 04, 2017 2:40:32 AM p2p.components.peers.SearchClient (Tester.Peer-5.SimpleDownload-aueb3.jpg.SearchClient) run
+FINE: A new search request for the file <aueb3.jpg> was sent through the channel.
+May 04, 2017 2:40:32 AM p2p.components.peers.SearchClient (Tester.Peer-5.SimpleDownload-aueb3.jpg.SearchClient) run
+FINE: The communication ended (approximately 0 remaining in group <Tester.Peer-5.SimpleDownload-aueb3.jpg.Clients>).
+May 04, 2017 2:40:32 AM p2p.components.peers.SearchClient (Tester.Peer-5.SimpleDownload-aueb1.jpeg.SearchClient) run
+FINE: The communication ended (approximately 0 remaining in group <Tester.Peer-5.SimpleDownload-aueb1.jpeg.Clients>).
+May 04, 2017 2:40:33 AM p2p.components.peers.DownloadScheduler run
+FINE: The server </127.0.0.1:43883> responded in 81 milliseconds.
+May 04, 2017 2:40:33 AM p2p.components.peers.DownloadScheduler run
+FINE: The server </127.0.0.1:53401> responded in 81 milliseconds.
+May 04, 2017 2:40:33 AM p2p.components.peers.DownloadScheduler run
+FINE: The file <aueb1.jpeg> was found in the following peers, appearing in ascending order based on their response time: [(/127.0.0.1:47510, 70), (/127.0.0.1:43883, 81)]
+May 04, 2017 2:40:33 AM p2p.components.peers.DownloadScheduler run
+FINE: The file <aueb3.jpg> was found in the following peers, appearing in ascending order based on their response time: [(/127.0.0.1:53401, 81)]
+May 04, 2017 2:40:33 AM p2p.utilities.testing.PeerTester (Tester) run
+INFO: 5 from 10 active peers
+May 04, 2017 2:40:33 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-0) run
+INFO: The peer ended the session with id <261512873> from the server's side.
+May 04, 2017 2:40:33 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-0) run
 INFO: The peer ended the session from the client's side.
-May 03, 2017 6:35:02 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager.Server-3) tracedLog
-FINE: The communication ended (approximately 2 remaining in group <Tester.Tracker.ServerManager.Servers>).
-{/127.0.0.1:51408=0}
-May 03, 2017 6:35:02 PM p2p.components.communication.Channel getResponseTime
-FINE: The server </127.0.0.1:51408> is probably down.
-Exception in thread "Tester.Peer-1.SimpleDownload-aueb1.jpeg" java.lang.NullPointerException
-	at java.util.HashMap.merge(HashMap.java:1224)
-	at java.util.stream.Collectors.lambda$toMap$58(Collectors.java:1320)
-	at java.util.stream.ReduceOps$3ReducingSink.accept(ReduceOps.java:169)
-	at java.util.HashMap$EntrySpliterator.forEachRemaining(HashMap.java:1691)
-	at java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:481)
-	at java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:471)
-	at java.util.stream.ReduceOps$ReduceTask.doLeaf(ReduceOps.java:747)
-	at java.util.stream.ReduceOps$ReduceTask.doLeaf(ReduceOps.java:721)
-	at java.util.stream.AbstractTask.compute(AbstractTask.java:316)
-	at java.util.concurrent.CountedCompleter.exec(CountedCompleter.java:731)
-	at java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:289)
-	at java.util.concurrent.ForkJoinTask.doInvoke(ForkJoinTask.java:401)
-	at java.util.concurrent.ForkJoinTask.invoke(ForkJoinTask.java:734)
-	at java.util.stream.ReduceOps$ReduceOp.evaluateParallel(ReduceOps.java:714)
-	at java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:233)
-	at java.util.stream.ReferencePipeline.collect(ReferencePipeline.java:499)
-	at p2p.components.communication.Channel.getResponseTime(Channel.java:107)
-	at p2p.components.communication.Channel.getResponseTime(Channel.java:76)
-	at p2p.components.peers.DownloadScheduler.run(DownloadScheduler.java:58)
-May 03, 2017 6:35:02 PM p2p.utilities.LoggerManager (Tester) tracedLog
-INFO: 1 from 2 active peers
-May 03, 2017 6:35:03 PM p2p.utilities.LoggerManager (Tester) tracedLog
-INFO: 1 from 2 active peers
-May 03, 2017 6:35:04 PM p2p.utilities.LoggerManager (Tester) tracedLog
-INFO: 1 from 2 active peers
-May 03, 2017 6:35:05 PM p2p.utilities.LoggerManager (Tester) tracedLog
-INFO: 1 from 2 active peers
-May 03, 2017 6:35:06 PM p2p.utilities.LoggerManager (Tester) tracedLog
-INFO: 1 from 2 active peers
-May 03, 2017 6:35:07 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager) tracedLog
-FINE: A new connection started (3 active server(s) currently handled by the manager).
-May 03, 2017 6:35:07 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager.Server-4) tracedLog
-FINE: A new communication started (1 active in group <Tester.Tracker.ServerManager.Servers>).
-May 03, 2017 6:35:07 PM p2p.utilities.LoggerManager (Tester.Peer-1.Login) tracedLog
-FINE: A new communication started (1 active in group <Tester.Peer-1.Clients>).
-May 03, 2017 6:35:07 PM p2p.components.peers.PeerLogoutClient (Tester.Peer-1.Login) communicate
-FINE: A new logout request was sent through the channel.
-May 03, 2017 6:35:07 PM p2p.components.communication.ServerChannel (Tester.Tracker.ServerManager.Server-4) communicate
-FINE: The session with id <1263114345> was terminated by user's request.
-May 03, 2017 6:35:07 PM p2p.utilities.LoggerManager (Tester.Peer-1.Login) tracedLog
-FINE: The communication ended (approximately 1 remaining in group <Tester.Peer-1.Clients>).
-May 03, 2017 6:35:07 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager.Server-4) tracedLog
-FINE: The communication ended (approximately 1 remaining in group <Tester.Tracker.ServerManager.Servers>).
-May 03, 2017 6:35:07 PM p2p.components.peers.Peer (Tester.Peer-1) logout
-INFO: The peer ended the session with id <1263114345> from the server's side.
-May 03, 2017 6:35:07 PM p2p.utilities.LoggerManager (Tester.Peer-1.ServerManager) tracedLog
-FINE: A server stopped listening for incoming connections (0 active server remain and reducing).
-May 03, 2017 6:35:07 PM p2p.components.peers.Peer (Tester.Peer-1) logout
+May 04, 2017 2:40:33 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-5) run
+INFO: The peer ended the session with id <-285202816> from the server's side.
+May 04, 2017 2:40:33 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-5) run
 INFO: The peer ended the session from the client's side.
-May 03, 2017 6:35:07 PM p2p.utilities.LoggerManager (Tester) tracedLog
+May 04, 2017 2:40:33 AM p2p.components.peers.DownloadScheduler run
+INFO: File <aueb3.jpg> was scheduled for download.
+May 04, 2017 2:40:33 AM p2p.components.peers.DownloadScheduler run
+INFO: File <CS_StudyGuide2016-17.pdf> was scheduled for download.
+May 04, 2017 2:40:33 AM p2p.components.peers.SearchClient (Tester.Peer-2.SimpleDownload-aueb3.jpg.SearchClient) run
+FINE: A new communication started (0 active in group <Tester.Peer-2.SimpleDownload-aueb3.jpg.Clients>).
+May 04, 2017 2:40:33 AM p2p.components.peers.SearchClient (Tester.Peer-2.SimpleDownload-aueb3.jpg.SearchClient) run
+FINE: A new search request for the file <aueb3.jpg> was sent through the channel.
+May 04, 2017 2:40:33 AM p2p.components.peers.SearchClient (Tester.Peer-2.SimpleDownload-CS_StudyGuide2016-17.pdf.SearchClient) run
+FINE: A new communication started (0 active in group <Tester.Peer-2.SimpleDownload-CS_StudyGuide2016-17.pdf.Clients>).
+May 04, 2017 2:40:33 AM p2p.components.peers.SearchClient (Tester.Peer-2.SimpleDownload-CS_StudyGuide2016-17.pdf.SearchClient) run
+FINE: A new search request for the file <CS_StudyGuide2016-17.pdf> was sent through the channel.
+May 04, 2017 2:40:33 AM p2p.components.peers.SearchClient (Tester.Peer-2.SimpleDownload-aueb3.jpg.SearchClient) run
+FINE: The communication ended (approximately 0 remaining in group <Tester.Peer-2.SimpleDownload-aueb3.jpg.Clients>).
+May 04, 2017 2:40:33 AM p2p.components.peers.SearchClient (Tester.Peer-2.SimpleDownload-CS_StudyGuide2016-17.pdf.SearchClient) run
+FINE: The communication ended (approximately 0 remaining in group <Tester.Peer-2.SimpleDownload-CS_StudyGuide2016-17.pdf.Clients>).
+May 04, 2017 2:40:33 AM p2p.components.peers.DownloadScheduler run
+INFO: File <aueb2.jpeg> was scheduled for download.
+May 04, 2017 2:40:33 AM p2p.components.peers.DownloadScheduler run
+INFO: File <Spring_Semester_16-17_20170330.pdf> was scheduled for download.
+May 04, 2017 2:40:33 AM p2p.components.peers.SearchClient (Tester.Peer-4.SimpleDownload-aueb2.jpeg.SearchClient) run
+FINE: A new communication started (0 active in group <Tester.Peer-4.SimpleDownload-aueb2.jpeg.Clients>).
+May 04, 2017 2:40:33 AM p2p.components.peers.DownloadScheduler run
+FINE: The server </127.0.0.1:53401> responded in 158 milliseconds.
+May 04, 2017 2:40:33 AM p2p.components.peers.SearchClient (Tester.Peer-4.SimpleDownload-aueb2.jpeg.SearchClient) run
+FINE: A new search request for the file <aueb2.jpeg> was sent through the channel.
+May 04, 2017 2:40:33 AM p2p.components.peers.DownloadScheduler run
+FINE: The server </127.0.0.1:53401> failed to respond in 1000 milliseconds.
+May 04, 2017 2:40:33 AM p2p.components.peers.DownloadScheduler run
+FINE: The file <aueb3.jpg> was found in the following peers, appearing in ascending order based on their response time: [(/127.0.0.1:53401, 158)]
+May 04, 2017 2:40:33 AM p2p.components.peers.DownloadScheduler (Tester.Peer-2.SimpleDownload-aueb3.jpg) run
+SEVERE: An IOException occurred during the download attempt.
+java.net.ConnectException: Connection refused (Connection refused)
+	at java.net.PlainSocketImpl.socketConnect(Native Method)
+	at java.net.AbstractPlainSocketImpl.doConnect(AbstractPlainSocketImpl.java:350)
+	at java.net.AbstractPlainSocketImpl.connectToAddress(AbstractPlainSocketImpl.java:206)
+	at java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:188)
+	at java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)
+	at java.net.Socket.connect(Socket.java:589)
+	at java.net.Socket.connect(Socket.java:538)
+	at java.net.Socket.<init>(Socket.java:434)
+	at java.net.Socket.<init>(Socket.java:244)
+	at p2p.components.communication.Channel.<init>(Channel.java:194)
+	at p2p.components.communication.ClientChannel.<init>(ClientChannel.java:78)
+	at p2p.components.peers.SimpleDownloadClient.<init>(SimpleDownloadClient.java:37)
+	at p2p.components.peers.DownloadScheduler.run(DownloadScheduler.java:103)
+
+May 04, 2017 2:40:33 AM p2p.components.peers.SearchClient (Tester.Peer-4.SimpleDownload-Spring_Semester_16-17_20170330.pdf.SearchClient) run
+FINE: A new communication started (0 active in group <Tester.Peer-4.SimpleDownload-Spring_Semester_16-17_20170330.pdf.Clients>).
+May 04, 2017 2:40:33 AM p2p.components.peers.SearchClient (Tester.Peer-4.SimpleDownload-Spring_Semester_16-17_20170330.pdf.SearchClient) run
+FINE: A new search request for the file <Spring_Semester_16-17_20170330.pdf> was sent through the channel.
+May 04, 2017 2:40:33 AM p2p.components.peers.SearchClient (Tester.Peer-4.SimpleDownload-aueb2.jpeg.SearchClient) run
+FINE: The communication ended (approximately 0 remaining in group <Tester.Peer-4.SimpleDownload-aueb2.jpeg.Clients>).
+May 04, 2017 2:40:33 AM p2p.components.peers.DownloadScheduler run
+FINE: The file <CS_StudyGuide2016-17.pdf> was found in the following peers, appearing in ascending order based on their response time: [(/127.0.0.1:47510, 132)]
+May 04, 2017 2:40:33 AM p2p.components.peers.DownloadScheduler run
+FINE: The server </127.0.0.1:55351> is probably down.
+May 04, 2017 2:40:33 AM p2p.components.peers.SearchClient (Tester.Peer-4.SimpleDownload-Spring_Semester_16-17_20170330.pdf.SearchClient) run
+FINE: The communication ended (approximately 0 remaining in group <Tester.Peer-4.SimpleDownload-Spring_Semester_16-17_20170330.pdf.Clients>).
+May 04, 2017 2:40:33 AM p2p.components.peers.DownloadScheduler run
+FINE: The server </127.0.0.1:55351> is probably down.
+May 04, 2017 2:40:33 AM p2p.components.peers.DownloadScheduler run
+FINE: The file <aueb2.jpeg> was found in the following peers, appearing in ascending order based on their response time: [(/127.0.0.1:47510, 87)]
+May 04, 2017 2:40:33 AM p2p.components.peers.DownloadScheduler run
+FINE: The server </127.0.0.1:47510> responded in 97 milliseconds.
+May 04, 2017 2:40:33 AM p2p.components.peers.DownloadScheduler run
+FINE: The file <Spring_Semester_16-17_20170330.pdf> was found in the following peers, appearing in ascending order based on their response time: [(/127.0.0.1:47510, 97)]
+May 04, 2017 2:40:34 AM p2p.utilities.testing.PeerTester (Tester) run
+INFO: 3 from 10 active peers
+May 04, 2017 2:40:34 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-2) run
+INFO: The peer ended the session with id <74547313> from the server's side.
+May 04, 2017 2:40:34 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-2) run
+INFO: The peer ended the session from the client's side.
+May 04, 2017 2:40:34 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-4) run
+INFO: The peer ended the session with id <1591856204> from the server's side.
+May 04, 2017 2:40:34 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-4) run
+INFO: The peer ended the session from the client's side.
+May 04, 2017 2:40:35 AM p2p.utilities.testing.PeerTester (Tester) run
+INFO: 1 from 10 active peers
+May 04, 2017 2:40:36 AM p2p.utilities.testing.PeerTester (Tester) run
+INFO: 1 from 10 active peers
+May 04, 2017 2:40:37 AM p2p.utilities.testing.PeerTester (Tester) run
+INFO: 1 from 10 active peers
+May 04, 2017 2:40:38 AM p2p.utilities.testing.PeerTester (Tester) run
+INFO: 1 from 10 active peers
+May 04, 2017 2:40:39 AM p2p.utilities.testing.PeerTester (Tester) run
+INFO: 1 from 10 active peers
+May 04, 2017 2:40:40 AM p2p.utilities.testing.PeerTester (Tester) run
+INFO: 1 from 10 active peers
+May 04, 2017 2:40:41 AM p2p.utilities.testing.PeerTester (Tester) run
+INFO: 1 from 10 active peers
+May 04, 2017 2:40:42 AM p2p.utilities.testing.PeerTester (Tester) run
+INFO: 1 from 10 active peers
+May 04, 2017 2:40:42 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-7) run
+INFO: The peer ended the session with id <308922252> from the server's side.
+May 04, 2017 2:40:42 AM p2p.utilities.testing.PeerTester$TestablePeer (Tester.Peer-7) run
+INFO: The peer ended the session from the client's side.
+May 04, 2017 2:40:43 AM p2p.utilities.testing.PeerTester (Tester) run
 INFO: 0 peer(s) were able to register successfully.
-May 03, 2017 6:35:07 PM p2p.utilities.LoggerManager (Tester) tracedLog
-INFO: 2 peer(s) were able to login successfully.
-May 03, 2017 6:35:07 PM p2p.utilities.LoggerManager (Tester) tracedLog
-INFO: 2 peer(s) were able to logout successfully.
-May 03, 2017 6:35:07 PM p2p.utilities.LoggerManager (Tester) tracedLog
-INFO: The initial sample of shared files contained 6 files.
-May 03, 2017 6:35:07 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager) tracedLog
-FINE: A server stopped listening for incoming connections (0 active server remain and reducing).
+May 04, 2017 2:40:43 AM p2p.utilities.testing.PeerTester (Tester) run
+INFO: 10 peer(s) were able to login successfully.
+May 04, 2017 2:40:43 AM p2p.utilities.testing.PeerTester (Tester) run
+INFO: 10 peer(s) were able to logout successfully.
+May 04, 2017 2:40:43 AM p2p.utilities.testing.PeerTester (Tester) run
+INFO: 6 from 7 downloads completed successfully.
+May 04, 2017 2:40:43 AM p2p.utilities.testing.PeerTester (Tester) run
+INFO: The following files have been downloaded: [/home/user/workspace/eclipse/java/java-aueb-p2p-v1.0/shared/peers/Tester.Peer-2_shared/CS_StudyGuide2016-17.pdf, /home/user/workspace/eclipse/java/java-aueb-p2p-v1.0/shared/peers/Tester.Peer-4_shared/aueb2.jpeg, /home/user/workspace/eclipse/java/java-aueb-p2p-v1.0/shared/peers/Tester.Peer-4_shared/Spring_Semester_16-17_20170330.pdf, /home/user/workspace/eclipse/java/java-aueb-p2p-v1.0/shared/peers/Tester.Peer-5_shared/aueb3.jpg, /home/user/workspace/eclipse/java/java-aueb-p2p-v1.0/shared/peers/Tester.Peer-5_shared/aueb1.jpeg, /home/user/workspace/eclipse/java/java-aueb-p2p-v1.0/shared/peers/Tester.Peer-6_shared/CS_StudyGuide2016-17.pdf]
+May 04, 2017 2:40:43 AM p2p.utilities.testing.PeerTester (Tester) run
+INFO: The initial sample of shared files contained 38 files.

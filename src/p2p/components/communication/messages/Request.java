@@ -12,7 +12,7 @@ import java.io.Serializable;
  *            The type of the data the request message contains.
  */
 public final class Request<D extends Serializable> extends Message<D> {
-
+	
 	/**
 	 * A Request.Type enumeration indicates the type of the request.
 	 *
@@ -37,31 +37,32 @@ public final class Request<D extends Serializable> extends Message<D> {
 		 * specific shared file.
 		 */
 		SEARCH,
+		SIMPLE_DOWNLOAD,
 		/**
 		 * Indicates a logout request.
 		 */
 		LOGOUT;
 	}
-
+	
 	/**
 	 * The serialVersionID required by the {@link Serializable} interface to
 	 * ensure the integrity of the object during a serialization and
 	 * deserialization process.
 	 */
 	private static final long serialVersionUID = 2756295932040700638L;
-
+	
 	/**
 	 * Returns a check alive request.
 	 *
 	 * @return A Request with type CHECK_ALIVE and no data.
 	 */
 	public static Request<Boolean> getCheckAliveRequest() {
-
+		
 		return new Request<>(Type.CHECK_ALIVE, null);
 	}
-
+	
 	private final Type type;
-
+	
 	/**
 	 * Allocates a new Reply object.
 	 *
@@ -71,18 +72,18 @@ public final class Request<D extends Serializable> extends Message<D> {
 	 *            The data of the request.
 	 */
 	public Request(final Type type, final D data) {
-
+		
 		super(data);
-
+		
 		this.type = type;
 	}
-
+	
 	/**
 	 * @return The request's type.
 	 */
 	public Type getType() {
-
+		
 		return this.type;
 	}
-
+	
 }

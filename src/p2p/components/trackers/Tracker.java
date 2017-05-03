@@ -17,12 +17,12 @@ import p2p.utilities.LoggerManager;
  * @author {@literal p3100161 <Joseph Sakos>}
  */
 public class Tracker extends CloseableThread {
-
+	
 	private final ThreadGroup server_managers = new ThreadGroup(this.getThreadGroup(),
 	        String.format("%s.ServerManagers", this.getName())); //$NON-NLS-1$
-
+	
 	private TrackerServerManager current_server_manager = null;
-
+	
 	/**
 	 * Allocates a new Tracker object.
 	 *
@@ -31,51 +31,51 @@ public class Tracker extends CloseableThread {
 	 * @param name
 	 *            The name of this tracker.
 	 */
-	public Tracker(ThreadGroup group, String name) {
+	public Tracker(final ThreadGroup group, final String name) {
 		super(group, name);
 	}
-
+	
 	/*
 	 * (non-Javadoc)
 	 * @see java.io.Closeable#close()
 	 */
 	@Override
 	public void close() throws IOException {
-
+		
 		if (this.current_server_manager != null) {
 			this.stopManager();
 		}
-
+		
 		CloseableThread.interrupt(this.server_managers);
-
+		
 	}
-
+	
 	/**
 	 * @return The server's socket description if one is currently running.
 	 */
 	public InetSocketAddress getServerAddress() {
-
+		
 		if (!this.isWaitingConnections()) {
-
+			
 			LoggerManager.tracedLog(this, Level.WARNING,
 			        "Tried to retrieve the server's socket address while the server manager is inactive."); //$NON-NLS-1$
-
+			
 			return null;
 		}
-
+		
 		return this.current_server_manager.getSocketAddress();
-
+		
 	}
-
+	
 	/**
 	 * @return True If the tracker is currently waiting for incoming
 	 *         connections.
 	 */
 	public boolean isWaitingConnections() {
-
+		
 		return (this.current_server_manager != null) && this.current_server_manager.isAlive();
 	}
-
+	
 	/**
 	 * Start a new {@link TrackerServerManager} object if one is not already
 	 * running.
@@ -89,51 +89,51 @@ public class Tracker extends CloseableThread {
 	 *            the {@link TrackerServerChannel} objects.
 	 * @return True If the server was started successfully.
 	 */
-	public boolean startManager(int port, String database_path) {
-
+	public boolean startManager(final int port, final String database_path) {
+		
 		if (this.isWaitingConnections()) return false;
-
+		
 		try {
-
+			
 			this.current_server_manager = new TrackerServerManager(this.server_managers,
 			        String.format("%s.ServerManager", this.getName()), port, database_path); //$NON-NLS-1$
 			this.current_server_manager.start();
-
+			
 			return true;
-
-		} catch (IOException ex) {
+			
+		} catch (final IOException ex) {
 			LoggerManager.tracedLog(this, Level.SEVERE,
 			        "An IOException occurred while initializing the server manager.", //$NON-NLS-1$
 			        ex);
 		}
-
+		
 		return false;
-
+		
 	}
-
+	
 	/**
 	 * Stops the {@link TrackerServerManager} object if it is currently running.
 	 *
 	 * @return If the server was stopped successfully.
 	 */
 	public boolean stopManager() {
-
+		
 		if (!this.isWaitingConnections()) return false;
-
+		
 		this.current_server_manager.interrupt();
-
+		
 		try {
-
+			
 			this.current_server_manager.join();
 			return true;
-
-		} catch (InterruptedException ex) {
+			
+		} catch (final InterruptedException ex) {
 			LoggerManager.tracedLog(this, Level.WARNING, "An IOException occurred while stopping the server manager.", //$NON-NLS-1$
 			        ex);
 		}
-
+		
 		return false;
-
+		
 	}
-
+	
 }

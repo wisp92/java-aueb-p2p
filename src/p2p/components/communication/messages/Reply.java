@@ -14,7 +14,7 @@ import p2p.components.exceptions.FailedRequestException;
  *            The type of the data the reply message contains.
  */
 public final class Reply<D extends Serializable> extends Message<D> {
-	
+
 	/**
 	 * A Reply.Type enumeration indicates the type of a previous message's
 	 * reply.
@@ -31,34 +31,34 @@ public final class Reply<D extends Serializable> extends Message<D> {
 		 */
 		Failure;
 	}
-	
+
 	/**
 	 * The serialVersionID required by the {@link Serializable} interface to
 	 * ensure the integrity of the object during a serialization and
 	 * deserialization process.
 	 */
 	private static final long serialVersionUID = -2029604022338319450L;
-	
+
 	/**
 	 * Returns a common failure reply.
 	 *
 	 * @return A Reply with type Failure and with no data.
 	 */
 	public static Reply<Boolean> getSimpleFailureMessage() {
-		
+
 		return new Reply<>(Type.Failure, null);
 	}
-	
+
 	/**
 	 * Returns a common success reply.
 	 *
 	 * @return A Reply with type Success and with no data.
 	 */
 	public static Reply<Boolean> getSimpleSuccessMessage() {
-		
+
 		return new Reply<>(Type.Success, null);
 	}
-	
+
 	/**
 	 * Tries to treat the provided object as a Reply object and retrieve the
 	 * contained data. If the replie's type is Failure then a
@@ -78,16 +78,16 @@ public final class Reply<D extends Serializable> extends Message<D> {
 	 */
 	public static <D extends Serializable> D getValidatedData(final Object object, final Class<D> expected_type)
 	        throws ClassCastException, FailedRequestException {
-		
+
 		final Reply<?> reply = Reply.class.cast(object);
 		if (reply.getType() == Type.Failure) throw new FailedRequestException();
-		
+
 		return expected_type.cast(reply.getData());
-		
+
 	}
-	
+
 	private final Type type;
-	
+
 	/**
 	 * Allocates a new Reply object.
 	 *
@@ -97,18 +97,18 @@ public final class Reply<D extends Serializable> extends Message<D> {
 	 *            The data of the reply.
 	 */
 	public Reply(final Type type, final D data) {
-		
+
 		super(data);
-		
+
 		this.type = type;
 	}
-	
+
 	/**
 	 * @return The replie's type.
 	 */
 	public Type getType() {
-		
+
 		return this.type;
 	}
-	
+
 }

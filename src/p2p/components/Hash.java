@@ -15,7 +15,7 @@ import p2p.utilities.LoggerManager;
  * @author {@literal p3100161 <Joseph Sakos>}
  */
 public final class Hash {
-	
+
 	/**
 	 * A Hash#Algorithm enumeration indicates the algorithm that can be used for
 	 * hash computation.
@@ -28,24 +28,24 @@ public final class Hash {
 		 * computation.
 		 */
 		SHA1("SHA-1"); //$NON-NLS-1$
-		
+
 		private final String label;
-		
+
 		private Algorithm(final String label) {
 			this.label = label;
 		}
-		
+
 		/**
 		 * @return The label of the enumeration. Used by the digest to determine
 		 *         the type of the computation.
 		 */
 		public final String getLabel() {
-			
+
 			return this.label;
 		}
-		
+
 	}
-	
+
 	/**
 	 * Calculates the hash value of the given plaintext based on the provided
 	 * algorithm.
@@ -57,26 +57,26 @@ public final class Hash {
 	 * @return The hash value of the plaintext.
 	 */
 	protected static final BigInteger getHash(final String plaintext, final Algorithm algorithm) {
-		
+
 		try {
-			
+
 			return new BigInteger(1,
 			        MessageDigest.getInstance(algorithm.getLabel()).digest(plaintext.getBytes("UTF-8"))); //$NON-NLS-1$
-			
+
 		} catch (NoSuchAlgorithmException | UnsupportedEncodingException ex) {
-			
+
 			/*
 			 * An UnsupportedEncodingException should never occur because
 			 * "URF-8" is hardcoded.
 			 */
-			
+
 			LoggerManager.tracedLog(Level.WARNING, "The hash value could not be calculated.", ex); //$NON-NLS-1$
 		}
-		
+
 		return null;
-		
+
 	}
-	
+
 	/**
 	 * Calculates the SHA-1 hash of the given plaintext.
 	 *
@@ -85,8 +85,8 @@ public final class Hash {
 	 * @return The SHA-1 hash of the plaintext.
 	 */
 	public static final BigInteger getSHA1(final String plaintext) {
-		
+
 		return Hash.getHash(plaintext, Algorithm.SHA1);
 	}
-	
+
 }

@@ -9,21 +9,21 @@ import java.io.Serializable;
  * @author {@literal p3100161 <Joseph Sakos>}
  */
 public class FailedRequestException extends Exception {
-	
+
 	/**
 	 * The serialVersionID required by the {@link Serializable} interface to
 	 * ensure the integrity of the object during a serialization and
 	 * deserialization process.
 	 */
 	private static final long serialVersionUID = 8162583015988451467L;
-	
+
 	/**
 	 * Allocates a new FailedRequestException object.
 	 */
 	public FailedRequestException() {
 		super();
 	}
-	
+
 	/**
 	 * Allocates a new FailedRequestException object.
 	 *
@@ -33,5 +33,5 @@ public class FailedRequestException extends Exception {
 	public FailedRequestException(final String message) {
 		super(message);
 	}
-	
+
 }
