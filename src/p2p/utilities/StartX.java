@@ -4,8 +4,8 @@ import java.io.PrintWriter;
 import java.util.Scanner;
 
 /**
- * A StartX object acts as an interface that provides input to and
- * reads output from another object.
+ * A StartX object acts as an interface that provides input to and reads output
+ * from another object.
  *
  * @author {@literal p3100161 <Joseph Sakos>}
  */
@@ -16,8 +16,8 @@ public abstract class StartX {
 	 */
 	protected final Scanner		in;
 	/**
-	 * The {@link PrintWriter} object that is used to print the
-	 * prompts and the program's messages.
+	 * The {@link PrintWriter} object that is used to print the prompts and the
+	 * program's messages.
 	 */
 	protected final PrintWriter	out;
 
@@ -25,11 +25,11 @@ public abstract class StartX {
 	 * Allocates a new StartX object.
 	 *
 	 * @param in
-	 *        The {@link Scanner} object that is used when input is
-	 *        required.
+	 *            The {@link Scanner} object that is used when input is
+	 *            required.
 	 * @param out
-	 *        The {@link PrintWriter} object that is used to print the
-	 *        prompts and the program's messages.
+	 *            The {@link PrintWriter} object that is used to print the
+	 *            prompts and the program's messages.
 	 */
 	public StartX(Scanner in, PrintWriter out) {
 
@@ -42,7 +42,7 @@ public abstract class StartX {
 	 * Prompts for input and reads the next line.
 	 *
 	 * @param prompt
-	 *        The prompt that is going to be printed.
+	 *            The prompt that is going to be printed.
 	 * @return The requested input in string format.
 	 */
 	public String getInput(String prompt) {

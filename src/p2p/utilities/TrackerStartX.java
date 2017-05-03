@@ -10,16 +10,16 @@ import p2p.components.trackers.Tracker;
 import p2p.utilities.common.Instructable;
 
 /**
- * A TrackerStartX object acts as an interface that provides input to
- * and reads output from {@link Tracker} object.
+ * A TrackerStartX object acts as an interface that provides input to and reads
+ * output from {@link Tracker} object.
  *
  * @author {@literal p3100161 <Joseph Sakos>}
  */
 public class TrackerStartX extends StartX {
 
 	/**
-	 * The Command enumeration indicates the commands that the
-	 * TrackerStartX object can handle.
+	 * The Command enumeration indicates the commands that the TrackerStartX
+	 * object can handle.
 	 *
 	 * @author {@literal p3100161 <Joseph Sakos>}
 	 */
@@ -29,25 +29,25 @@ public class TrackerStartX extends StartX {
 		 */
 		START("start"), //$NON-NLS-1$
 		/**
-		 * Indicates a command to exit the interface.
-		 */
-		EXIT("exit"), //$NON-NLS-1$
-		/**
 		 * Indicates a command to stop the server.
 		 */
-		STOP("stop"); //$NON-NLS-1$
+		STOP("stop"), //$NON-NLS-1$
+		/**
+		 * Indicates a command to exit the interface.
+		 */
+		EXIT("exit"); //$NON-NLS-1$
 
 		/**
-		 * Searches the enumeration for a Command object that can be
-		 * associated with the given text.
+		 * Searches the enumeration for a Command object that can be associated
+		 * with the given text.
 		 *
 		 * @param text
-		 *        The text associated with the requested command.
-		 * @return The Command object that can be associated with the
-		 *         given text.
+		 *            The text associated with the requested command.
+		 * @return The Command object that can be associated with the given
+		 *         text.
 		 * @throws NoSuchElementException
-		 *         If no Command object can be associated with the
-		 *         given text.
+		 *             If no Command object can be associated with the given
+		 *             text.
 		 */
 		public static Command find(String text) throws NoSuchElementException {
 
@@ -76,7 +76,7 @@ public class TrackerStartX extends StartX {
 	 * Starts the execution of the tracker.
 	 *
 	 * @param args
-	 *        The console arguments.
+	 *            The console arguments.
 	 */
 	public static void main(String[] args) {
 
@@ -89,7 +89,7 @@ public class TrackerStartX extends StartX {
 				new TrackerStartX(tracker, in_scanner, out_writer).start();
 
 			} catch (IOException ex) {
-				LoggerManager.logException(TrackerStartX.class, Level.SEVERE, ex);
+				LoggerManager.tracedLog(Level.WARNING, "The tracker could not be terminated properly.", ex); //$NON-NLS-1$
 			}
 
 		}
@@ -102,14 +102,13 @@ public class TrackerStartX extends StartX {
 	 * Allocates a new TrackerStartX object.
 	 *
 	 * @param tracker
-	 *        The {@link Tracker} object that is going to be handled
-	 *        by this interface.
+	 *            The {@link Tracker} object that is going to be handled by this
+	 *            interface.
 	 * @param in
-	 *        The {@link Scanner} object that is used when input is
-	 *        required
+	 *            The {@link Scanner} object that is used when input is required
 	 * @param out
-	 *        The {@link PrintWriter} object that is used to print the
-	 *        prompts and the program's messages.
+	 *            The {@link PrintWriter} object that is used to print the
+	 *            prompts and the program's messages.
 	 */
 	public TrackerStartX(Tracker tracker, Scanner in, PrintWriter out) {
 
@@ -148,15 +147,25 @@ public class TrackerStartX extends StartX {
 				switch (last_command) {
 				case START:
 
-					this.out.println(String.format("Tracker> server_started: %b", //$NON-NLS-1$
-					        this.tracker.startManager(Integer.parseInt(this.getInput("port")), //$NON-NLS-1$
-					                this.getInput("database's path")))); //$NON-NLS-1$
+					if (this.tracker.startManager(Integer.parseInt(this.getInput("port")), //$NON-NLS-1$
+					        this.getInput("database's path"))) { //$NON-NLS-1$
+						System.out.println("The server was started successfully.");
+					}
+					else {
+						System.out.println("The server failed to start.");
+					}
+
 					break;
 
 				case STOP:
 
-					this.out.println(String.format("Tracker> server_stopped: %b", //$NON-NLS-1$
-					        this.tracker.stopManager()));
+					if (this.tracker.stopManager()) {
+						System.out.println("The server terminated successfully.");
+					}
+					else {
+						System.out.println("The server failed to terminate.");
+					}
+
 					break;
 
 				case EXIT:
@@ -165,7 +174,7 @@ public class TrackerStartX extends StartX {
 				}
 
 			} catch (@SuppressWarnings("unused") NoSuchElementException ex) {
-				this.out.println(String.format("Unrecognided command")); //$NON-NLS-1$
+				this.out.println("Unrecognized command"); //$NON-NLS-1$
 			}
 
 		} while (last_command != Command.EXIT);

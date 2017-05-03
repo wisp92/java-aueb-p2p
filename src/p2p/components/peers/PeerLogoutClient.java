@@ -1,6 +1,7 @@
 package p2p.components.peers;
 
 import java.io.IOException;
+import java.net.Socket;
 import java.util.logging.Level;
 
 import p2p.components.communication.ClientChannel;
@@ -10,6 +11,9 @@ import p2p.components.exceptions.FailedRequestException;
 import p2p.utilities.LoggerManager;
 
 /**
+ * A PeerLogoutClient object sends a logout request to the tracker and stores
+ * its response.
+ *
  * @author {@literal p3100161 <Joseph Sakos>}
  */
 public class PeerLogoutClient extends ClientChannel {
@@ -18,9 +22,16 @@ public class PeerLogoutClient extends ClientChannel {
 
 	/**
 	 * @param group
+	 *            The {@link ThreadGroup ThreadGroup} object that this channel
+	 *            belongs to.
 	 * @param name
-	 * @param socket_address
+	 *            The name of this channel.
+	 * @param caller
+	 *            The peer that started the execution of this client. Used
+	 *            retrieve information about the peer.
 	 * @throws IOException
+	 *             If an error occurs during the initialization of the
+	 *             {@link Socket Socket} object.
 	 */
 	public PeerLogoutClient(ThreadGroup group, String name, Peer caller) throws IOException {
 		super(group, name, caller.getTrackerAddress());
@@ -37,7 +48,7 @@ public class PeerLogoutClient extends ClientChannel {
 
 		this.out.writeObject(new Request<>(Request.Type.LOGOUT, this.caller.getSessionID()));
 
-		LoggerManager.logMessage(this, Level.INFO, "sent a logout request"); //$NON-NLS-1$
+		LoggerManager.tracedLog(this, Level.FINE, "A new logout request was sent through the channel."); //$NON-NLS-1$
 
 		try {
 

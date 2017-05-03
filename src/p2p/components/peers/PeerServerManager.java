@@ -8,10 +8,9 @@ import java.net.Socket;
 import p2p.components.communication.ServerChannelManager;
 
 /**
- * A PeerServerManager is a {@link ServerChannelManager} object that
- * listens's for incoming connections from the peers or the tracker
- * and allocates a new {@link PeerServerChannel} object to handle each
- * one.
+ * A PeerServerManager is a {@link ServerChannelManager} object that listens's
+ * for incoming connections from the peers or the tracker and allocates new
+ * {@link PeerServerChannel} objects to handle each one.
  *
  * @author {@literal p3100161 <Joseph Sakos>}
  */
@@ -23,18 +22,17 @@ class PeerServerManager extends ServerChannelManager<PeerServerChannel> {
 	 * Allocates a new PeerServerManager object.
 	 *
 	 * @param group
-	 *        The {@link ThreadGroup} object that this thread belongs
-	 *        to.
+	 *            The {@link ThreadGroup} object that this manager belongs to.
 	 * @param name
-	 *        The name of this Thread.
+	 *            The name of this manager.
 	 * @param port
-	 *        The port number that the {@link ServerSocket} object is
-	 *        going to listen to.
+	 *            The port number that the {@link ServerSocket} object is going
+	 *            to listen to.
 	 * @param shared_directory_path
-	 *        The path to the shared directory.
+	 *            The path to the shared directory.
 	 * @throws IOException
-	 *         I an error occurs during the allocation of the
-	 *         {@link ServerSocket} object.
+	 *             I an error occurs during the allocation of the
+	 *             {@link ServerSocket} object.
 	 */
 	public PeerServerManager(ThreadGroup group, String name, int port, String shared_directory_path)
 	        throws IOException {
@@ -45,22 +43,20 @@ class PeerServerManager extends ServerChannelManager<PeerServerChannel> {
 	}
 
 	/**
-	 * Allocates a new PeerServerManager object that is going to
-	 * listen to a random port. Use the
-	 * {@link ServerChannelManager#getSocketDescription()
-	 * getSocketDescription()} method to get the required information
-	 * to remotely access the server.
+	 * Allocates a new PeerServerManager object that is going to listen to a
+	 * random port. Use the {@link ServerChannelManager#getSocketAddress
+	 * getSocketAddress()} method to get the required information to remotely
+	 * access the server.
 	 *
 	 * @param group
-	 *        The {@link ThreadGroup} object that this thread belongs
-	 *        to.
+	 *            The {@link ThreadGroup} object that this manager belongs to.
 	 * @param name
-	 *        The name of this Thread.
+	 *            The name of this manager.
 	 * @param shared_directory_path
-	 *        The path to the shared directory.
+	 *            The path to the shared directory.
 	 * @throws IOException
-	 *         I an error occurs during the allocation of the
-	 *         {@link ServerSocket} object.
+	 *             I an error occurs during the allocation of the
+	 *             {@link ServerSocket} object.
 	 */
 	public PeerServerManager(ThreadGroup group, String name, String shared_directory_path) throws IOException {
 		this(group, name, 0, shared_directory_path);

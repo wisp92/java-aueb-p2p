@@ -13,12 +13,12 @@ import p2p.components.exceptions.FailedRequestException;
 import p2p.utilities.LoggerManager;
 
 /**
- * A PeerRegisterClient object sends a registration request to the
- * tracker and stores its response.
+ * A PeerRegistrationClient object sends a registration request to the tracker
+ * and stores its response.
  *
  * @author {@literal p3100161 <Joseph Sakos>}
  */
-class PeerRegisterClient extends ClientChannel {
+class PeerRegistrationClient extends ClientChannel {
 
 	private final Credentials user_credentials;
 
@@ -26,20 +26,20 @@ class PeerRegisterClient extends ClientChannel {
 	 * Allocates a new Peer.RegisterClientChannel object.
 	 *
 	 * @param group
-	 *        The {@link ThreadGroup ThreadGroup} object that this
-	 *        channel belongs to.
+	 *            The {@link ThreadGroup ThreadGroup} object that this channel
+	 *            belongs to.
 	 * @param name
-	 *        The name of this channel.
+	 *            The name of this channel.
 	 * @param socket_address
-	 *        The {@link InetSocketAddress SocketDescription} of the
-	 *        tracker's socket.
+	 *            The {@link InetSocketAddress SocketDescription} of the
+	 *            tracker's socket.
 	 * @param user_credentials
-	 *        The credentials of the new user.
+	 *            The credentials of the new user.
 	 * @throws IOException
-	 *         If an error occurs during the initialization of the
-	 *         {@link Socket Socket} object.
+	 *             If an error occurs during the initialization of the
+	 *             {@link Socket Socket} object.
 	 */
-	public PeerRegisterClient(ThreadGroup group, String name, InetSocketAddress socket_address,
+	public PeerRegistrationClient(ThreadGroup group, String name, InetSocketAddress socket_address,
 	        Credentials user_credentials) throws IOException {
 		super(group, name, socket_address);
 
@@ -55,7 +55,7 @@ class PeerRegisterClient extends ClientChannel {
 
 		this.out.writeObject(new Request<>(Request.Type.REGISTER, this.user_credentials));
 
-		LoggerManager.logMessage(this, Level.INFO, "sent a registration request"); //$NON-NLS-1$
+		LoggerManager.tracedLog(this, Level.FINE, "A new registration request was sent through the channel."); //$NON-NLS-1$
 
 		try {
 

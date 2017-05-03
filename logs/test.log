@@ -1,58 +1,155 @@
-May 01, 2017 6:35:02 PM p2p.components.peers.Peer setTracker
-INFO: The tracker's description updated to </0.0.0.0:54686>
-java.lang.Exception
-	at p2p.components.peers.Peer.setTracker(Peer.java:400)
-	at p2p.utilities.testing.PeerTester.run(PeerTester.java:367)
-
-May 01, 2017 6:35:02 PM p2p.utilities.LoggerManager logMessage
-INFO: Tester.Tracker.ServerManager> started (0 active servers)
-May 01, 2017 6:35:02 PM p2p.utilities.LoggerManager logMessage
-INFO: Tester.Peer-0> Tester.Peer-0> The shared directory's path changed to <shared/peers/Tester.Peer-0_shared>.
-May 01, 2017 6:35:02 PM p2p.utilities.LoggerManager logMessage
-INFO: Tester> 1 from 1 active peers
-May 01, 2017 6:35:02 PM p2p.utilities.LoggerManager logMessage
-INFO: Tester.Tracker.ServerManager> started a new communication (1 active servers)
-May 01, 2017 6:35:02 PM p2p.utilities.LoggerManager logMessage
-INFO: Tester.Peer-0.Login> started (1 active in group <Tester.Peer-0.Clients>)
-May 01, 2017 6:35:02 PM p2p.utilities.LoggerManager logMessage
-INFO: Tester.Tracker.ServerManager.Server-0> started (1 active in group <Tester.Tracker.ServerManager.Servers>)
-May 01, 2017 6:35:03 PM p2p.utilities.LoggerManager logMessage
-INFO: Tester.Peer-0.Login> sent a login request
-May 01, 2017 6:35:03 PM p2p.utilities.LoggerManager logMessage
-INFO: Tester.Peer-0.ServerManager> started (0 active servers)
-May 01, 2017 6:35:03 PM p2p.utilities.LoggerManager logMessage
-INFO: Tester.Tracker.ServerManager.Server-0> user with username <user-0> logged in to session with id <901354376>
-May 01, 2017 6:35:03 PM p2p.utilities.LoggerManager logMessage
-INFO: Tester.Peer-0.Login> closed (0 active in group <Tester.Peer-0.Clients>)
-May 01, 2017 6:35:03 PM p2p.utilities.LoggerManager logMessage
-INFO: Tester.Peer-0> Tester.Peer-0> User with credentials <user-0:> logged in to tracker with session id <901354376>.
-May 01, 2017 6:35:03 PM p2p.utilities.LoggerManager logMessage
-INFO: Tester.Tracker.ServerManager.Server-0> closed (0 active in group <Tester.Tracker.ServerManager.Servers>)
-May 01, 2017 6:35:03 PM p2p.utilities.LoggerManager logMessage
-INFO: Tester> 1 from 1 active peers
-May 01, 2017 6:35:04 PM p2p.utilities.LoggerManager logMessage
-INFO: Tester.Tracker.ServerManager> started a new communication (2 active servers)
-May 01, 2017 6:35:04 PM p2p.utilities.LoggerManager logMessage
-INFO: Tester.Peer-0.Login> started (1 active in group <Tester.Peer-0.Clients>)
-May 01, 2017 6:35:04 PM p2p.utilities.LoggerManager logMessage
-INFO: Tester.Tracker.ServerManager.Server-1> started (2 active in group <Tester.Tracker.ServerManager.Servers>)
-May 01, 2017 6:35:04 PM p2p.utilities.LoggerManager logMessage
-INFO: Tester.Peer-0.Login> sent a logout request
-May 01, 2017 6:35:04 PM p2p.utilities.LoggerManager logMessage
-INFO: Tester.Peer-0.Login> closed (0 active in group <Tester.Peer-0.Clients>)
-May 01, 2017 6:35:04 PM p2p.utilities.LoggerManager logMessage
-WARNING: Tester.Tracker.ServerManager.Server-1> user with session id <901354376> logged out successfully
-May 01, 2017 6:35:04 PM p2p.utilities.LoggerManager logMessage
-INFO: Tester.Tracker.ServerManager.Server-1> closed (0 active in group <Tester.Tracker.ServerManager.Servers>)
-May 01, 2017 6:35:04 PM p2p.utilities.LoggerManager logMessage
-INFO: Tester.Peer-0.ServerManager> closed (0 active servers)
-May 01, 2017 6:35:04 PM p2p.utilities.LoggerManager logMessage
-INFO: Tester> 1 peer(s) were able to login sucessfully.
-May 01, 2017 6:35:04 PM p2p.utilities.LoggerManager logMessage
-INFO: Tester> 0 peer(s) were able to register sucessfully.
-May 01, 2017 6:35:04 PM p2p.utilities.LoggerManager logMessage
-INFO: Tester> 1 peer(s) were able to logout sucessfully.
-May 01, 2017 6:35:04 PM p2p.utilities.LoggerManager logMessage
-INFO: Tester> The intialial sample of shared files contained 2 files.
-May 01, 2017 6:35:04 PM p2p.utilities.LoggerManager logMessage
-INFO: Tester.Tracker.ServerManager> closed (0 active servers)
+May 03, 2017 6:34:55 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager) tracedLog
+FINE: The server started listening for incoming connection
+May 03, 2017 6:34:55 PM p2p.components.peers.Peer (Tester.Peer-0) setTracker
+INFO: The tracker's description updated to </0.0.0.0:56980>
+May 03, 2017 6:34:55 PM p2p.utilities.testing.TestHelper (Tester.Peer-0) newSharedDirectory
+INFO: The shared directory's path changed to <shared/peers/Tester.Peer-0_shared>.
+May 03, 2017 6:34:55 PM p2p.components.peers.Peer (Tester.Peer-1) setTracker
+INFO: The tracker's description updated to </0.0.0.0:56980>
+May 03, 2017 6:34:55 PM p2p.utilities.testing.TestHelper (Tester.Peer-1) newSharedDirectory
+INFO: The shared directory's path changed to <shared/peers/Tester.Peer-1_shared>.
+May 03, 2017 6:34:55 PM p2p.utilities.LoggerManager (Tester) tracedLog
+INFO: 2 from 2 active peers
+May 03, 2017 6:34:55 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager) tracedLog
+FINE: A new connection started (1 active server(s) currently handled by the manager).
+May 03, 2017 6:34:55 PM p2p.utilities.LoggerManager (Tester.Peer-1.Login) tracedLog
+FINE: A new communication started (1 active in group <Tester.Peer-1.Clients>).
+May 03, 2017 6:34:55 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager.Server-0) tracedLog
+FINE: A new communication started (1 active in group <Tester.Tracker.ServerManager.Servers>).
+May 03, 2017 6:34:55 PM p2p.utilities.LoggerManager (Tester.Peer-0.Login) tracedLog
+FINE: A new communication started (1 active in group <Tester.Peer-0.Clients>).
+May 03, 2017 6:34:55 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager) tracedLog
+FINE: A new connection started (2 active server(s) currently handled by the manager).
+May 03, 2017 6:34:55 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager.Server-1) tracedLog
+FINE: A new communication started (2 active in group <Tester.Tracker.ServerManager.Servers>).
+May 03, 2017 6:34:55 PM p2p.components.peers.PeerLoginClient (Tester.Peer-0.Login) communicate
+FINE: A new login request was sent through the channel.
+May 03, 2017 6:34:55 PM p2p.components.peers.PeerLoginClient (Tester.Peer-1.Login) communicate
+FINE: A new login request was sent through the channel.
+May 03, 2017 6:34:56 PM p2p.utilities.LoggerManager (Tester.Peer-1.ServerManager) tracedLog
+FINE: The server started listening for incoming connection
+May 03, 2017 6:34:56 PM p2p.utilities.LoggerManager (Tester.Peer-0.ServerManager) tracedLog
+FINE: The server started listening for incoming connection
+May 03, 2017 6:34:56 PM p2p.components.communication.ServerChannel (Tester.Tracker.ServerManager.Server-1) communicate
+FINE: A new session with id <1838444023> was created for the user with username <user-0>.
+May 03, 2017 6:34:56 PM p2p.components.communication.ServerChannel (Tester.Tracker.ServerManager.Server-0) communicate
+FINE: A new session with id <1263114345> was created for the user with username <user-1>.
+May 03, 2017 6:34:56 PM p2p.utilities.LoggerManager (Tester.Peer-1.Login) tracedLog
+FINE: The communication ended (approximately 1 remaining in group <Tester.Peer-1.Clients>).
+May 03, 2017 6:34:56 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager.Server-1) tracedLog
+FINE: The communication ended (approximately 2 remaining in group <Tester.Tracker.ServerManager.Servers>).
+May 03, 2017 6:34:56 PM p2p.utilities.LoggerManager (Tester.Peer-0.Login) tracedLog
+FINE: The communication ended (approximately 1 remaining in group <Tester.Peer-0.Clients>).
+May 03, 2017 6:34:56 PM p2p.components.peers.Peer (Tester.Peer-0) login
+INFO: The peer logged in to the tracker with session id <1838444023> and credentials <user-0:>.
+May 03, 2017 6:34:56 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager.Server-0) tracedLog
+FINE: The communication ended (approximately 2 remaining in group <Tester.Tracker.ServerManager.Servers>).
+May 03, 2017 6:34:56 PM p2p.components.peers.Peer (Tester.Peer-1) login
+INFO: The peer logged in to the tracker with session id <1263114345> and credentials <user-1:>.
+May 03, 2017 6:34:56 PM p2p.utilities.LoggerManager (Tester) tracedLog
+INFO: 2 from 2 active peers
+May 03, 2017 6:34:57 PM p2p.utilities.LoggerManager (Tester) tracedLog
+INFO: 2 from 2 active peers
+May 03, 2017 6:34:58 PM p2p.utilities.LoggerManager (Tester) tracedLog
+INFO: 2 from 2 active peers
+May 03, 2017 6:34:59 PM p2p.utilities.LoggerManager (Tester) tracedLog
+INFO: 2 from 2 active peers
+May 03, 2017 6:35:00 PM p2p.utilities.LoggerManager (Tester) tracedLog
+INFO: 2 from 2 active peers
+May 03, 2017 6:35:01 PM p2p.utilities.LoggerManager (Tester) tracedLog
+INFO: 2 from 2 active peers
+May 03, 2017 6:35:01 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager) tracedLog
+FINE: A new connection started (3 active server(s) currently handled by the manager).
+May 03, 2017 6:35:01 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager.Server-2) tracedLog
+FINE: A new communication started (3 active in group <Tester.Tracker.ServerManager.Servers>).
+May 03, 2017 6:35:01 PM p2p.components.communication.Channel (Tester.Peer-1.SimpleDownload-aueb1.jpeg.SearchClient) run
+FINE: A new communication started (0 active in group <Tester.Peer-1.SimpleDownload-aueb1.jpeg.Clients>).
+May 03, 2017 6:35:01 PM p2p.components.communication.Channel (Tester.Peer-1.SimpleDownload-aueb1.jpeg.SearchClient) run
+FINE: A new search request for the file <aueb1.jpeg> was sent through the channel.
+May 03, 2017 6:35:01 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager) tracedLog
+FINE: A new connection started (2 active server(s) currently handled by the manager).
+May 03, 2017 6:35:01 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager.Server-3) tracedLog
+FINE: A new communication started (2 active in group <Tester.Tracker.ServerManager.Servers>).
+May 03, 2017 6:35:01 PM p2p.utilities.LoggerManager (Tester.Peer-0.Login) tracedLog
+FINE: A new communication started (1 active in group <Tester.Peer-0.Clients>).
+May 03, 2017 6:35:01 PM p2p.components.peers.PeerLogoutClient (Tester.Peer-0.Login) communicate
+FINE: A new logout request was sent through the channel.
+May 03, 2017 6:35:01 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager.Server-2) tracedLog
+FINE: The communication ended (approximately 2 remaining in group <Tester.Tracker.ServerManager.Servers>).
+May 03, 2017 6:35:02 PM p2p.components.communication.Channel (Tester.Peer-1.SimpleDownload-aueb1.jpeg.SearchClient) run
+FINE: The communication ended (approximately 0 remaining in group <Tester.Peer-1.SimpleDownload-aueb1.jpeg.Clients>).
+May 03, 2017 6:35:02 PM p2p.components.communication.ServerChannel (Tester.Tracker.ServerManager.Server-3) communicate
+FINE: The session with id <1838444023> was terminated by user's request.
+May 03, 2017 6:35:02 PM p2p.utilities.LoggerManager (Tester.Peer-0.Login) tracedLog
+FINE: The communication ended (approximately 1 remaining in group <Tester.Peer-0.Clients>).
+May 03, 2017 6:35:02 PM p2p.components.peers.Peer (Tester.Peer-0) logout
+INFO: The peer ended the session with id <1838444023> from the server's side.
+May 03, 2017 6:35:02 PM p2p.utilities.LoggerManager (Tester.Peer-0.ServerManager) tracedLog
+FINE: A server stopped listening for incoming connections (0 active server remain and reducing).
+May 03, 2017 6:35:02 PM p2p.components.peers.Peer (Tester.Peer-0) logout
+INFO: The peer ended the session from the client's side.
+May 03, 2017 6:35:02 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager.Server-3) tracedLog
+FINE: The communication ended (approximately 2 remaining in group <Tester.Tracker.ServerManager.Servers>).
+{/127.0.0.1:51408=0}
+May 03, 2017 6:35:02 PM p2p.components.communication.Channel getResponseTime
+FINE: The server </127.0.0.1:51408> is probably down.
+Exception in thread "Tester.Peer-1.SimpleDownload-aueb1.jpeg" java.lang.NullPointerException
+	at java.util.HashMap.merge(HashMap.java:1224)
+	at java.util.stream.Collectors.lambda$toMap$58(Collectors.java:1320)
+	at java.util.stream.ReduceOps$3ReducingSink.accept(ReduceOps.java:169)
+	at java.util.HashMap$EntrySpliterator.forEachRemaining(HashMap.java:1691)
+	at java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:481)
+	at java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:471)
+	at java.util.stream.ReduceOps$ReduceTask.doLeaf(ReduceOps.java:747)
+	at java.util.stream.ReduceOps$ReduceTask.doLeaf(ReduceOps.java:721)
+	at java.util.stream.AbstractTask.compute(AbstractTask.java:316)
+	at java.util.concurrent.CountedCompleter.exec(CountedCompleter.java:731)
+	at java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:289)
+	at java.util.concurrent.ForkJoinTask.doInvoke(ForkJoinTask.java:401)
+	at java.util.concurrent.ForkJoinTask.invoke(ForkJoinTask.java:734)
+	at java.util.stream.ReduceOps$ReduceOp.evaluateParallel(ReduceOps.java:714)
+	at java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:233)
+	at java.util.stream.ReferencePipeline.collect(ReferencePipeline.java:499)
+	at p2p.components.communication.Channel.getResponseTime(Channel.java:107)
+	at p2p.components.communication.Channel.getResponseTime(Channel.java:76)
+	at p2p.components.peers.DownloadScheduler.run(DownloadScheduler.java:58)
+May 03, 2017 6:35:02 PM p2p.utilities.LoggerManager (Tester) tracedLog
+INFO: 1 from 2 active peers
+May 03, 2017 6:35:03 PM p2p.utilities.LoggerManager (Tester) tracedLog
+INFO: 1 from 2 active peers
+May 03, 2017 6:35:04 PM p2p.utilities.LoggerManager (Tester) tracedLog
+INFO: 1 from 2 active peers
+May 03, 2017 6:35:05 PM p2p.utilities.LoggerManager (Tester) tracedLog
+INFO: 1 from 2 active peers
+May 03, 2017 6:35:06 PM p2p.utilities.LoggerManager (Tester) tracedLog
+INFO: 1 from 2 active peers
+May 03, 2017 6:35:07 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager) tracedLog
+FINE: A new connection started (3 active server(s) currently handled by the manager).
+May 03, 2017 6:35:07 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager.Server-4) tracedLog
+FINE: A new communication started (1 active in group <Tester.Tracker.ServerManager.Servers>).
+May 03, 2017 6:35:07 PM p2p.utilities.LoggerManager (Tester.Peer-1.Login) tracedLog
+FINE: A new communication started (1 active in group <Tester.Peer-1.Clients>).
+May 03, 2017 6:35:07 PM p2p.components.peers.PeerLogoutClient (Tester.Peer-1.Login) communicate
+FINE: A new logout request was sent through the channel.
+May 03, 2017 6:35:07 PM p2p.components.communication.ServerChannel (Tester.Tracker.ServerManager.Server-4) communicate
+FINE: The session with id <1263114345> was terminated by user's request.
+May 03, 2017 6:35:07 PM p2p.utilities.LoggerManager (Tester.Peer-1.Login) tracedLog
+FINE: The communication ended (approximately 1 remaining in group <Tester.Peer-1.Clients>).
+May 03, 2017 6:35:07 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager.Server-4) tracedLog
+FINE: The communication ended (approximately 1 remaining in group <Tester.Tracker.ServerManager.Servers>).
+May 03, 2017 6:35:07 PM p2p.components.peers.Peer (Tester.Peer-1) logout
+INFO: The peer ended the session with id <1263114345> from the server's side.
+May 03, 2017 6:35:07 PM p2p.utilities.LoggerManager (Tester.Peer-1.ServerManager) tracedLog
+FINE: A server stopped listening for incoming connections (0 active server remain and reducing).
+May 03, 2017 6:35:07 PM p2p.components.peers.Peer (Tester.Peer-1) logout
+INFO: The peer ended the session from the client's side.
+May 03, 2017 6:35:07 PM p2p.utilities.LoggerManager (Tester) tracedLog
+INFO: 0 peer(s) were able to register successfully.
+May 03, 2017 6:35:07 PM p2p.utilities.LoggerManager (Tester) tracedLog
+INFO: 2 peer(s) were able to login successfully.
+May 03, 2017 6:35:07 PM p2p.utilities.LoggerManager (Tester) tracedLog
+INFO: 2 peer(s) were able to logout successfully.
+May 03, 2017 6:35:07 PM p2p.utilities.LoggerManager (Tester) tracedLog
+INFO: The initial sample of shared files contained 6 files.
+May 03, 2017 6:35:07 PM p2p.utilities.LoggerManager (Tester.Tracker.ServerManager) tracedLog
+FINE: A server stopped listening for incoming connections (0 active server remain and reducing).

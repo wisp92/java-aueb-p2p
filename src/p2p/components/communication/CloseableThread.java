@@ -10,84 +10,81 @@ import java.util.stream.Collectors;
 import p2p.utilities.LoggerManager;
 
 /**
- * A CloseableThread object can be used instead of a simple
- * {@link Thread} object when the thread should implement a close
- * method after its execution.
+ * A CloseableThread object can be used instead of a simple {@link Thread}
+ * object when the thread should implement a close method after its execution.
  *
  * @author {@literal p3100161 <Joseph Sakos>}
  */
 public abstract class CloseableThread extends Thread implements Closeable {
-
+	
 	/**
-	 * Returns the number of active threads of a {@link ThreadGroup}
-	 * object.
+	 * Returns the number of active threads of a {@link ThreadGroup} object.
 	 *
 	 * @param group
-	 *        The group that contains the threads.
+	 *            The group that contains the threads.
 	 * @return The number of active thread in the group.
 	 */
-	public static final int countActive(ThreadGroup group) {
-
+	public static final int countActive(final ThreadGroup group) {
+		
 		return CloseableThread.getActive(group).size();
-
+		
 	}
-
+	
 	/**
 	 * Returns the active threads of a {@link ThreadGroup} object.
 	 *
 	 * @param group
-	 *        The group that contains the threads.
+	 *            The group that contains the threads.
 	 * @return An {@link ArrayDeque} object of the threads.
 	 */
-	public static final List<Thread> getActive(ThreadGroup group) {
-
+	public static final List<Thread> getActive(final ThreadGroup group) {
+		
 		return Thread.getAllStackTraces().keySet().parallelStream().filter(x -> x.getThreadGroup() == group)
 		        .collect(Collectors.toList());
-
+		
 	}
-
+	
 	/**
 	 * Interrupts the active threads of a {@link ThreadGroup} object.
 	 *
 	 * @param group
-	 *        The group that contains the threads to be interrupted.
+	 *            The group that contains the threads to be interrupted.
 	 */
-	public static final void interrupt(ThreadGroup group) {
-
+	public static final void interrupt(final ThreadGroup group) {
+		
 		CloseableThread.getActive(group).parallelStream().forEach(x -> x.interrupt());
-
+		
 	}
-
+	
 	/**
 	 * Allocates a new CloseableThread object.
 	 *
 	 * @param group
-	 *        The {@link ThreadGroup} object that this thread belongs
-	 *        to.
+	 *            The {@link ThreadGroup} object that this thread belongs to.
 	 * @param name
-	 *        The name of this Thread.
+	 *            The name of this Thread.
 	 */
-	public CloseableThread(ThreadGroup group, String name) {
+	public CloseableThread(final ThreadGroup group, final String name) {
 		super(group, name);
 	}
-
+	
 	/*
 	 * (non-Javadoc)
 	 * @see java.lang.Thread#interrupt()
 	 */
 	@Override
 	public void interrupt() {
-
+		
 		super.interrupt();
-
+		
 		try {
-
+			
 			this.close();
-
-		} catch (IOException ex) {
-			LoggerManager.tracedLog(Level.WARNING, "The thread could not be closed properly.", ex); //$NON-NLS-1$
+			
+		} catch (final IOException ex) {
+			LoggerManager.tracedLog(this, Level.WARNING, "The thread could not be closed properly.", ex); //$NON-NLS-1$
 		}
-
+		
 	}
-
+	
 }

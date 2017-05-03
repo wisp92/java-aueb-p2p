@@ -9,17 +9,17 @@ import p2p.components.communication.CloseableThread;
 import p2p.utilities.LoggerManager;
 
 /**
- * A Tracker object synchronizes and interconnects the peers that it
- * manages. Provides information about which peers are available at
- * any point of time, the files each one can provide and the required
- * information to request a file from a specific peer.
+ * A Tracker object synchronizes and interconnects the peers that it manages.
+ * Provides information about which peers are available at any point of time,
+ * the files each one can provide and the required information to request a file
+ * from a specific peer.
  *
  * @author {@literal p3100161 <Joseph Sakos>}
  */
 public class Tracker extends CloseableThread {
 
-	private final ThreadGroup server_managers
-	        = new ThreadGroup(this.getThreadGroup(), String.format("%s.ServerManagers", this.getName())); //$NON-NLS-1$
+	private final ThreadGroup server_managers = new ThreadGroup(this.getThreadGroup(),
+	        String.format("%s.ServerManagers", this.getName())); //$NON-NLS-1$
 
 	private TrackerServerManager current_server_manager = null;
 
@@ -27,10 +27,9 @@ public class Tracker extends CloseableThread {
 	 * Allocates a new Tracker object.
 	 *
 	 * @param group
-	 *        The {@link ThreadGroup} object that this thread belongs
-	 *        to.
+	 *            The {@link ThreadGroup} object that this tracker belongs to.
 	 * @param name
-	 *        The name of this Thread.
+	 *            The name of this tracker.
 	 */
 	public Tracker(ThreadGroup group, String name) {
 		super(group, name);
@@ -52,21 +51,24 @@ public class Tracker extends CloseableThread {
 	}
 
 	/**
-	 * @return The server's socket description if one is currently
-	 *         running.
+	 * @return The server's socket description if one is currently running.
 	 */
 	public InetSocketAddress getServerAddress() {
 
-		if (this.isWaitingConnections()) return this.current_server_manager.getSocketAddress();
+		if (!this.isWaitingConnections()) {
 
-		LoggerManager.logMessage(this, Level.WARNING,
-		        String.format("%s> The tracker is not currently listening to any ports.", this.getName())); //$NON-NLS-1$
+			LoggerManager.tracedLog(this, Level.WARNING,
+			        "Tried to retrieve the server's socket address while the server manager is inactive."); //$NON-NLS-1$
 
-		return null;
+			return null;
+		}
+
+		return this.current_server_manager.getSocketAddress();
+
 	}
 
 	/**
-	 * @return If the tracker is currently waiting for incoming
+	 * @return True If the tracker is currently waiting for incoming
 	 *         connections.
 	 */
 	public boolean isWaitingConnections() {
@@ -75,17 +77,17 @@ public class Tracker extends CloseableThread {
 	}
 
 	/**
-	 * Start a new {@link TrackerServerManager} object if one is not
-	 * already running.
+	 * Start a new {@link TrackerServerManager} object if one is not already
+	 * running.
 	 *
 	 * @param port
-	 *        The port number that the {@link ServerSocket} object is
-	 *        going to listen to. 0 means that a random port is going
-	 *        to be selected.
+	 *            The port number that the {@link ServerSocket} object is going
+	 *            to listen to. 0 means that a random port is going to be
+	 *            selected.
 	 * @param database_path
-	 *        The path of the database that the manager is going to
-	 *        pass to the {@link TrackerServerChannel} objects.
-	 * @return If the server was started successfully.
+	 *            The path of the database that the manager is going to pass to
+	 *            the {@link TrackerServerChannel} objects.
+	 * @return True If the server was started successfully.
 	 */
 	public boolean startManager(int port, String database_path) {
 
@@ -100,7 +102,9 @@ public class Tracker extends CloseableThread {
 			return true;
 
 		} catch (IOException ex) {
-			LoggerManager.logException(this, Level.SEVERE, ex);
+			LoggerManager.tracedLog(this, Level.SEVERE,
+			        "An IOException occurred while initializing the server manager.", //$NON-NLS-1$
+			        ex);
 		}
 
 		return false;
@@ -108,8 +112,7 @@ public class Tracker extends CloseableThread {
 	}
 
 	/**
-	 * Stops the {@link TrackerServerManager} object if it is
-	 * currently running.
+	 * Stops the {@link TrackerServerManager} object if it is currently running.
 	 *
 	 * @return If the server was stopped successfully.
 	 */
@@ -125,7 +128,8 @@ public class Tracker extends CloseableThread {
 			return true;
 
 		} catch (InterruptedException ex) {
-			LoggerManager.logException(this, Level.WARNING, ex);
+			LoggerManager.tracedLog(this, Level.WARNING, "An IOException occurred while stopping the server manager.", //$NON-NLS-1$
+			        ex);
 		}
 
 		return false;

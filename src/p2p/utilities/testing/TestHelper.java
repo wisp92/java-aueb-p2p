@@ -19,8 +19,54 @@ import p2p.utilities.LoggerManager;
  */
 public class TestHelper {
 
+	/*
+	 * TODO Should be read from a properties file.
+	 */
+
+	public static List<File> getDefaultSharedFiles(Path sample_list_path) {
+		
+		File sample_directory = sample_list_path.getParent().toFile();
+		
+		try {
+
+			/*
+			 * Created a list of files by reading the list.
+			 */
+			
+		return Files.lines(sample_list_path).parallel()
+		        .map(x -> new File(sample_directory, x)).filter(x -> x.isFile()).collect(Collectors.toList());
+		
+		} catch (IOException ex) {
+
+			LoggerManager.tracedLog(Level.SEVERE, "List of files could not be read.", ex); //$NON-NLS-1$
+
+		}
+		
+		return null;
+		
+	}
+	
+	/**
+	 * The default list file that contains the locations of the available shared
+	 * files.
+	 */
 	public static final Path default_sample_list_path = Paths.get("shared/sample/files_list.txt"); //$NON-NLS-1$
 
+	/**
+	 * Initialized a new shared directory with random files from the default
+	 * file list.
+	 *
+	 * @param peer
+	 *            The peer that is going to use the shared directory.
+	 * @param shared_directory_path
+	 *            The path to the shared directory.
+	 * @param min_sample_size
+	 *            The minimum number of files the are going to be selected at
+	 *            random. More files may be selected. Less files can only be
+	 *            selected if the list does not provide enough files for the
+	 *            selection process.
+	 * @return True If the peer's shared directory was updated successfully.
+	 */
 	public static boolean newSharedDirectory(Peer peer, String shared_directory_path, int min_sample_size) {
 
 		/*
@@ -33,7 +79,7 @@ public class TestHelper {
 
 			if (shared_directory.exists()) {
 
-				LoggerManager.logMessage(TestHelper.class, Level.WARNING,
+				LoggerManager.tracedLog(Level.SEVERE,
 				        String.format(
 				                "The path <%s> can not be a shared directory because it point to an existing file.", //$NON-NLS-1$
 				                shared_directory.getAbsolutePath()));
@@ -47,7 +93,7 @@ public class TestHelper {
 		}
 		else if (shared_directory.listFiles().length > 0) {
 
-			LoggerManager.logMessage(TestHelper.class, Level.WARNING,
+			LoggerManager.tracedLog(Level.SEVERE,
 			        String.format("The directory <%s> can not be a shared directory because it is not empty.", //$NON-NLS-1$
 			                shared_directory.getAbsolutePath()));
 
@@ -59,16 +105,20 @@ public class TestHelper {
 		 * Copy random files from the files list.
 		 */
 
-		File sample_directory = TestHelper.default_sample_list_path.getParent().toFile();
+		List<File> files_list = TestHelper.getDefaultSharedFiles(TestHelper.default_sample_list_path);
 
-		List<File> files_list;
-
-		try {
-
-			files_list = Files.lines(TestHelper.default_sample_list_path).parallel()
-			        .map(x -> new File(sample_directory, x)).filter(x -> x.isFile()).collect(Collectors.toList());
+		if (files_list != null) {
+			
+			/*
+			 * Shuffles the list.
+			 */
 
 			Collections.shuffle(files_list);
+
+			/*
+			 * Selects a random number of files an copies them to the shared
+			 * directory's location.
+			 */
 
 			files_list.parallelStream()
 			        .limit(new Random().nextInt(files_list.size() - min_sample_size) + min_sample_size).forEach(x -> {
@@ -78,24 +128,17 @@ public class TestHelper {
 					        Files.copy(x.toPath(), new File(shared_directory, x.getName()).toPath());
 
 				        } catch (IOException ex) {
-					        LoggerManager.logException(TestHelper.class, Level.SEVERE, ex);
+					        LoggerManager.tracedLog(Level.SEVERE, String.format(
+					                "The file <%s> could not be copied to the shared directory.", x.getName()), ex); //$NON-NLS-1$
 				        }
 
 			        });
-
-		} catch (IOException ex) {
-			LoggerManager.logException(TestHelper.class, Level.SEVERE, ex);
+			
 		}
+
 
 		return peer.setSharedDirectory(shared_directory_path);
 
-	}
-
-	/**
-	 *
-	 */
-	public TestHelper() {
-		// TODO Auto-generated constructor stub
 	}
 
 }
