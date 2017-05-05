@@ -198,6 +198,15 @@ public class Peer extends CloseableThread {
 	}
 
 	/**
+	 * @return The list of completed download files.
+	 */
+	public List<File> getCompletedDownloadFiles() {
+
+		return this.download_managers.parallelStream().filter(x -> x.getStatus() == ClientChannel.Status.SUCCESSFULL)
+		        .map(x -> x.getFile()).distinct().collect(Collectors.toList());
+	}
+
+	/**
 	 * @return The number of completed downloads.
 	 */
 	public long getCompletedDownloads() {
@@ -212,6 +221,15 @@ public class Peer extends CloseableThread {
 	public List<File> getDownloadedFiles() {
 
 		return this.download_managers.parallelStream().filter(x -> x.getStatus() == ClientChannel.Status.SUCCESSFULL)
+		        .map(x -> x.getFile()).distinct().collect(Collectors.toList());
+	}
+
+	/**
+	 * @return The list of failed download files.
+	 */
+	public List<File> getFailedDownloadFiles() {
+
+		return this.download_managers.parallelStream().filter(x -> x.getStatus() == ClientChannel.Status.FAILED)
 		        .map(x -> x.getFile()).distinct().collect(Collectors.toList());
 	}
 

@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 
 import p2p.components.trackers.Tracker;
 import p2p.utilities.common.Instructable;
@@ -32,6 +33,10 @@ public class TrackerStartX extends StartX {
 		 * Indicates a command to stop the server.
 		 */
 		STOP("stop"),
+		/**
+		 * Indicates a command to print the available command of the interface.
+		 */
+		HELP("help"),
 		/**
 		 * Indicates a command to exit the interface.
 		 */
@@ -166,6 +171,11 @@ public class TrackerStartX extends StartX {
 						System.out.println("The server failed to terminate.");
 					}
 
+					break;
+
+				case HELP:
+
+					Stream.of(Command.values()).forEach(x -> System.out.println(x.getText()));
 					break;
 
 				case EXIT:

@@ -33,8 +33,7 @@ public abstract class Channel extends CloseableThread {
 	 * The default amount of milliseconds to wait for a reply to the check alive
 	 * request before considering the peer inactive.
 	 */
-	public static final long default_check_alive_threshold = Configuration.getDefault()
-	        .getInteger("check_alive_threshold", 1000);
+	public static final int default_check_alive_threshold = 1000;
 
 	/**
 	 * Sends a check alive request to the socket and return its response time.
@@ -45,7 +44,8 @@ public abstract class Channel extends CloseableThread {
 	 */
 	public static final long getResponseTime(final InetSocketAddress socket_address) {
 
-		return Channel.getResponseTime(socket_address, Channel.default_check_alive_threshold);
+		return Channel.getResponseTime(socket_address,
+		        Configuration.getDefault().getInteger("check_alive_threshold", Channel.default_check_alive_threshold));
 	}
 
 	/**
@@ -79,7 +79,8 @@ public abstract class Channel extends CloseableThread {
 	public static final List<Pair<InetSocketAddress, Long>> getResponseTime(
 	        final Set<InetSocketAddress> socket_address_batch) {
 
-		return Channel.getResponseTime(socket_address_batch, Channel.default_check_alive_threshold);
+		return Channel.getResponseTime(socket_address_batch,
+		        Configuration.getDefault().getInteger("check_alive_threshold", Channel.default_check_alive_threshold));
 	}
 
 	/**

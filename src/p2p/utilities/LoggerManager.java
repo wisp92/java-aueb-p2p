@@ -85,7 +85,7 @@ public class LoggerManager {
 			Class<?> caller_class = Class.forName(caller_class_name);
 
 			final String caller_package_name = caller_class.getPackage().getName();
-			
+
 			if (thread != null) {
 				caller_class = thread.getClass();
 				caller_class_name = String.format("%s (%s)", caller_class.getName(), thread.getName());

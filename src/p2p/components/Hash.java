@@ -15,7 +15,7 @@ import p2p.utilities.LoggerManager;
  * @author {@literal p3100161 <Joseph Sakos>}
  */
 public final class Hash {
-	
+
 	/**
 	 * A Hash#Algorithm enumeration indicates the algorithm that can be used for
 	 * hash computation.
@@ -28,24 +28,24 @@ public final class Hash {
 		 * algorithm.
 		 */
 		SHA1("SHA-1");
-		
+
 		private final String label;
-		
+
 		private Algorithm(final String label) {
 			this.label = label;
 		}
-		
+
 		/**
 		 * @return The label of the enumeration. Used by a digest to determine
 		 *         the type of the computation.
 		 */
 		public final String getLabel() {
-			
+
 			return this.label;
 		}
-		
+
 	}
-	
+
 	/**
 	 * Calculates the SHA-1 hash of the given plaintext.
 	 *
@@ -55,10 +55,10 @@ public final class Hash {
 	 *         not be completed.
 	 */
 	public static final BigInteger getSHA1(final String plaintext) {
-		
+
 		return Hash.getHash(plaintext, Algorithm.SHA1);
 	}
-	
+
 	/**
 	 * Calculates the hash value of the given plaintext based on the provided
 	 * algorithm.
@@ -71,25 +71,25 @@ public final class Hash {
 	 *         not be completed.
 	 */
 	protected static final BigInteger getHash(final String plaintext, final Algorithm algorithm) {
-		
+
 		try {
-			
+
 			return new BigInteger(1,
 			        MessageDigest.getInstance(algorithm.getLabel()).digest(plaintext.getBytes("UTF-8")));
-			
+
 		} catch (NoSuchAlgorithmException | UnsupportedEncodingException ex) {
-			
+
 			/*
 			 * An UnsupportedEncodingException should never occur because the
 			 * encoding "UTF-8" is hardcoded.
 			 */
-			
+
 			LoggerManager.tracedLog(Level.WARNING, "The hash value could not be calculated.", ex);
-			
+
 		}
-		
+
 		return null;
-		
+
 	}
-	
+
 }

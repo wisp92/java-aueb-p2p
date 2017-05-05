@@ -18,7 +18,7 @@ import p2p.utilities.LoggerManager;
  * @author {@literal p3100161 <Joseph Sakos>}
  */
 public final class CheckAliveClient extends ClientChannel {
-	
+
 	/**
 	 * Allocates a new CheckAliveClient object.
 	 *
@@ -38,34 +38,34 @@ public final class CheckAliveClient extends ClientChannel {
 	        throws IOException {
 		super(group, name, socket_address);
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see p2p.components.communication.Channel#communicate()
 	 */
 	@Override
 	protected final void communicate() throws IOException, InterruptedException {
-		
+
 		this.out.writeObject(new Request<>(Request.Type.CHECK_ALIVE, Boolean.TRUE));
-		
+
 		LoggerManager.tracedLog(this, Level.FINE, "A new check alive request was sent through the channel.");
-		
+
 		try {
 
 			Reply.getValidatedData(this.in.readObject(), Boolean.class);
-			
+
 			this.status = Status.SUCCESSFULL;
-			
+
 		} catch (ClassCastException | ClassNotFoundException ex) {
 
 			throw new IOException(ex);
 
 		} catch (@SuppressWarnings("unused") final FailedRequestException ex) {
-			
+
 			this.status = Status.FAILED;
-			
+
 		}
-		
+
 	}
-	
+
 }

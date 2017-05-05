@@ -73,7 +73,7 @@ public class Configuration extends Properties {
 			try (final FileInputStream in = new FileInputStream(new File(path))) {
 
 				this.load(in);
-				
+
 				LoggerManager.tracedLog(Level.INFO,
 				        String.format("The configuration file <%s> loaded successfully.", path));
 
@@ -85,6 +85,35 @@ public class Configuration extends Properties {
 			}
 
 		}
+
+	}
+
+	/**
+	 * Get an boolean value from the properties file.
+	 *
+	 * @param key
+	 *            The key of the property.
+	 * @return The value of the property or false.
+	 */
+	public final boolean getBoolean(final String key) {
+
+		return this.getBoolean(key, false);
+	}
+
+	/**
+	 * Get an boolean value from the properties file.
+	 *
+	 * @param key
+	 *            The key of the property.
+	 * @param default_value
+	 *            The default value that is returned in case the configuration
+	 *            does not have the specified property.
+	 * @return The value of the property.
+	 */
+	public final boolean getBoolean(final String key, final boolean default_value) {
+
+		if (Boolean.parseBoolean(this.getProperty(key))) return true;
+		return default_value;
 
 	}
 
@@ -157,35 +186,6 @@ public class Configuration extends Properties {
 	public final String getString(final String key, final String default_value) {
 
 		return this.getProperty(key, default_value);
-	}
-	
-	/**
-	 * Get an boolean value from the properties file.
-	 *
-	 * @param key
-	 *            The key of the property.
-	 * @param default_value
-	 *            The default value that is returned in case the configuration
-	 *            does not have the specified property.
-	 * @return The value of the property.
-	 */
-	public final boolean getBoolean(final String key, final boolean default_value) {
-		
-		if (Boolean.parseBoolean(this.getProperty(key))) return true;
-		return default_value;
-		
-	}
-	
-	/**
-	 * Get an boolean value from the properties file.
-	 *
-	 * @param key
-	 *            The key of the property.
-	 * @return The value of the property or false.
-	 */
-	public final boolean getBoolean(final String key) {
-		
-		return this.getBoolean(key, false);
 	}
 
 }

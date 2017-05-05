@@ -3,13 +3,17 @@ package p2p.utilities;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
+import java.nio.file.Paths;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 
+import p2p.components.Configuration;
 import p2p.components.common.Credentials;
 import p2p.components.peers.Peer;
 import p2p.utilities.common.Instructable;
+import p2p.utilities.testing.TestHelper;
 
 /**
  * A PeerStartX object acts as an interface that provides input to and reads
@@ -45,8 +49,28 @@ public class PeerStartX extends StartX {
 		/**
 		 * Indicates a command to change the shared directory's location.
 		 */
-		SET_SHARED_DIRECTORY("set shared_directory"),
-
+		SET_SHARED_DIRECTORY("set directory"),
+		/**
+		 * Indicates a command to print all the available shared files from the
+		 * default list.
+		 */
+		PRINT_FILES_LIST("print list"),
+		/**
+		 * Indicates a command to print all the files in the shared directory.
+		 */
+		PRINT_SHARED_DIRECTORY("print directory"),
+		/**
+		 * Indicates a command to download the specified file.
+		 */
+		DOWNLOAD("download"),
+		/**
+		 * Indicates a command to print current progress report,
+		 */
+		PROGRESS("progress"),
+		/**
+		 * Indicates a command to exit the interface.
+		 */
+		HELP("help"),
 		/**
 		 * Indicates a command to exit the interface.
 		 */
@@ -94,6 +118,8 @@ public class PeerStartX extends StartX {
 	 *            The console arguments.
 	 */
 	public static void main(final String[] args) {
+
+		Configuration.setAsDefault(new Configuration("configuration.properties"));
 
 		final ThreadGroup peers = new ThreadGroup("Peers");
 
@@ -177,6 +203,38 @@ public class PeerStartX extends StartX {
 
 					break;
 
+				case PRINT_FILES_LIST:
+
+					TestHelper
+					        .getDefaultSharedFiles(Paths.get(Configuration.getDefault().getString("sample_list_path",
+					                TestHelper.default_sample_list_path)))
+					        .forEach(x -> System.out.println(x.getName()));
+					break;
+
+				case PRINT_SHARED_DIRECTORY:
+
+					this.peer.getSharedFiles().forEach(x -> System.out.println(x.getName()));
+					break;
+
+				case DOWNLOAD:
+
+					this.peer.addDownload(this.getInput("filename"));
+					System.out.println("The file was added to the schedule.");
+					break;
+
+				case PROGRESS:
+
+					System.out.println("Active Downloads:");
+					this.peer.getDownloadedFiles().forEach(x -> System.out.println(x));
+					System.out.println("Failed Downloads:");
+					this.peer.getFailedDownloadFiles().forEach(x -> System.out.println(x));
+					System.out.println("Completed Downloads:");
+					this.peer.getCompletedDownloadFiles().forEach(x -> System.out.println(x));
+					System.out.println(String.format("Tracker acknowledged %d of %d completed downloads",
+					        new Long(this.peer.getAcknowledgedDownloads()),
+					        new Long(this.peer.getCompletedDownloads())));
+					break;
+
 				case REGISTER:
 
 					if (this.peer.register(new Credentials(this.getInput("username"), this.getInput("password")))) {//$NON-NLS-2$
@@ -210,6 +268,11 @@ public class PeerStartX extends StartX {
 
 					break;
 
+				case HELP:
+
+					Stream.of(Command.values()).forEach(x -> System.out.println(x.getText()));
+					break;
+
 				case EXIT:
 				default:
 					break;
@@ -219,8 +282,8 @@ public class PeerStartX extends StartX {
 				this.out.println("Unrecognized command");
 			}
 
-		} while (last_command != Command.EXIT);
-
+		} while (last_command != Command.EXIT);			
+		
 	}
 
 }

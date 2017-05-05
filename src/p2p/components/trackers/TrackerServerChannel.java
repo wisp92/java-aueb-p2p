@@ -4,8 +4,11 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -14,6 +17,7 @@ import p2p.components.Hash;
 import p2p.components.common.Credentials;
 import p2p.components.common.FileDescription;
 import p2p.components.common.Pair;
+import p2p.components.communication.Channel;
 import p2p.components.communication.ServerChannel;
 import p2p.components.communication.messages.Message;
 import p2p.components.communication.messages.Reply;
@@ -55,7 +59,7 @@ public class TrackerServerChannel extends ServerChannel {
 	 * The default time penalty that a user that has not yet send any files is
 	 * going to experience.
 	 */
-	public static final int default_peer_penalty = Configuration.getDefault().getInteger("peer_penalty", 100);
+	public static final int default_peer_penalty = 100;
 
 	/**
 	 * If a remote host server policy is applied then the peer can indicate a
@@ -101,7 +105,8 @@ public class TrackerServerChannel extends ServerChannel {
 
 			LoggerManager.tracedLog(this, Level.WARNING, String.format("Apply penalty to user <%s>.", username));
 
-			Thread.sleep(TrackerServerChannel.default_peer_penalty);
+			Thread.sleep(
+			        Configuration.getDefault().getInteger("peer_penalty", TrackerServerChannel.default_peer_penalty));
 		}
 
 	}
@@ -618,7 +623,7 @@ public class TrackerServerChannel extends ServerChannel {
 		final String filename = String.class.cast(pair.getSecond());
 		String username = null;
 
-		LinkedList<Pair<String, InetSocketAddress>> peers_information = new LinkedList<>();
+		List<Pair<String, InetSocketAddress>> peers_list = Collections.emptyList();
 
 		if (session_id != null) {
 
@@ -628,7 +633,7 @@ public class TrackerServerChannel extends ServerChannel {
 
 				if (username != null) {
 
-					peers_information = new LinkedList<>(this.session_manager.searchFilename(filename));
+					peers_list = this.session_manager.searchFilename(filename);
 
 				}
 
@@ -636,9 +641,39 @@ public class TrackerServerChannel extends ServerChannel {
 
 			if (username != null) {
 
+				final Set<InetSocketAddress> filtered_peers = Channel
+				        .getResponseTime(
+				                peers_list.parallelStream().map(y -> y.getSecond()).collect(Collectors.toSet()))
+				        .stream().map(x -> x.getFirst()).collect(Collectors.toSet());
+				peers_list = peers_list.stream().filter(x -> {
+					final boolean is_valid = filtered_peers.contains(x.getSecond());
+					if (!is_valid) {
+						synchronized (this.session_manager) {
+							/*
+							 * Due to synchronization some usernames might be
+							 * invalid by the time they are checked. In such
+							 * cases the outcome of getSessionID is going to be
+							 * null. Just skip such cases because they have no
+							 * effect after all.
+							 */
+							final Integer invalid_session_id = this.session_manager.getSessionID(x.getFirst());
+							if (invalid_session_id != null) {
+
+								this.session_manager.removeSession(invalid_session_id.intValue());
+
+								LoggerManager.tracedLog(Level.FINE,
+								        String.format(
+								                "Removed user <%s> from the active user because of failure to reply to a check alive request.",
+								                x));
+							}
+						}
+					}
+					return is_valid;
+				}).collect(Collectors.toList());
+
 				this.applyPenalty(username);
 
-				this.out.writeObject(new Reply<>(Reply.Type.SUCCESS, peers_information));
+				this.out.writeObject(new Reply<>(Reply.Type.SUCCESS, new LinkedList<>(peers_list)));
 
 				return true;
 

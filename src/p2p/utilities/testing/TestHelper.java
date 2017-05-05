@@ -28,8 +28,19 @@ public class TestHelper {
 	 * The default list file that contains the locations of the available shared
 	 * files.
 	 */
-	public static final Path default_sample_list_path = Paths
-	        .get(Configuration.getDefault().getString("sample_list_path", "shared/sample/files_list.txt"));
+	public static final String default_sample_list_path = "shared/sample/files_list.txt";
+
+	/**
+	 * Returns a list of the files contained in the default list file.
+	 *
+	 * @return A list of shared files.
+	 */
+	public static List<File> getDefaultSharedFiles() {
+
+		return TestHelper.getDefaultSharedFiles(Paths
+		        .get(Configuration.getDefault().getString("sample_list_path", TestHelper.default_sample_list_path)));
+
+	}
 
 	/**
 	 * Returns a list of the files contained in the list file.
@@ -173,8 +184,10 @@ public class TestHelper {
 	public static boolean newSharedDirectory(final Peer peer, final String shared_directory_path,
 	        final int min_sample_size) {
 
-		return TestHelper.newSharedDirectory(peer, TestHelper.default_sample_list_path, shared_directory_path,
-		        min_sample_size);
+		return TestHelper.newSharedDirectory(peer,
+		        Paths.get(
+		                Configuration.getDefault().getString("sample_list_path", TestHelper.default_sample_list_path)),
+		        shared_directory_path, min_sample_size);
 	}
 
 }

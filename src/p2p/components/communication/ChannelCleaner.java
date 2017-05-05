@@ -16,8 +16,7 @@ public class ChannelCleaner extends Thread {
 	/**
 	 * The default interval at which the cleaner is going to check the threads.
 	 */
-	public static final int default_cleaning_interval = Configuration.getDefault().getInteger("cleaning_interval",
-	        20000);
+	public static final int default_cleaning_interval = 20000;
 
 	private final int		  cleaning_interval;
 	private final ThreadGroup group;
@@ -45,7 +44,8 @@ public class ChannelCleaner extends Thread {
 		super(CloseableThread.newThreadGroup(group.getParent(), "Cleaners"),
 		        String.format("%s.Cleaner", group.getParent().getName()));
 
-		this.cleaning_interval = cleaning_interval > 0 ? cleaning_interval : ChannelCleaner.default_cleaning_interval;
+		this.cleaning_interval = cleaning_interval > 0 ? cleaning_interval
+		        : Configuration.getDefault().getInteger("cleaning_interval", ChannelCleaner.default_cleaning_interval);
 		this.group = group;
 	}
 

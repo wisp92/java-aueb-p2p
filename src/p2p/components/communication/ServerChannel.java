@@ -102,5 +102,5 @@ public abstract class ServerChannel extends Channel {
 	 *             {@link Socket} object's streams.
 	 */
 	protected abstract void communicate(Request<?> request) throws IOException;
-	
+
 }

@@ -156,10 +156,10 @@ public abstract class Database implements Closeable {
 		try {
 
 			if (this.connection != null) {
-				
+
 				this.connection.close();
 				return true;
-				
+
 			}
 
 		} catch (final SQLException ex) {

@@ -15,7 +15,7 @@ import java.net.Socket;
  * @author {@literal p3100161 <Joseph Sakos>}
  */
 public abstract class ClientChannel extends Channel {
-	
+
 	/**
 	 * A Status enumeration indicates the current status of the request that the
 	 * client sent to initialize the communication.
@@ -37,7 +37,7 @@ public abstract class ClientChannel extends Channel {
 		 */
 		FAILED;
 	}
-	
+
 	/*
 	 * The order of declaration is important for the 'in' and 'out' variables.
 	 */
@@ -50,14 +50,14 @@ public abstract class ClientChannel extends Channel {
 	 * The stream from which the channel is going to read.
 	 */
 	protected final ObjectInputStream  in  = this.getInputStream();
-	
+
 	/**
 	 * Holds the current status of the request. Should be updated by the
 	 * {@link Channel#communicate communicate()} method or else it is going to
 	 * remain unknown.
 	 */
 	protected Status status;
-	
+
 	/**
 	 * Allocates a new ClientChannel object by binding a {@link Socket} object
 	 * to server's socket and initializing the associated streams.
@@ -76,10 +76,10 @@ public abstract class ClientChannel extends Channel {
 	public ClientChannel(final ThreadGroup group, final String name, final InetSocketAddress socket_address)
 	        throws IOException {
 		super(group, name, socket_address);
-		
+
 		this.status = Status.UNKNOWN;
 	}
-	
+
 	/**
 	 * Allocates a new ClientChannel object.
 	 *
@@ -96,16 +96,16 @@ public abstract class ClientChannel extends Channel {
 	 */
 	public ClientChannel(final ThreadGroup group, final String name, final Socket socket) throws IOException {
 		super(group, name, socket);
-		
+
 		this.status = Status.UNKNOWN;
 	}
-	
+
 	/**
 	 * @return The current status of the request.
 	 */
 	public Status getStatus() {
-		
+
 		return this.status;
 	}
-	
+
 }
