@@ -19,9 +19,9 @@ import p2p.utilities.LoggerManager;
  * @author {@literal p3100161 <Joseph Sakos>}
  */
 class PeerRegistrationClient extends ClientChannel {
-	
+
 	private final Credentials user_credentials;
-	
+
 	/**
 	 * Allocates a new Peer.RegisterClientChannel object.
 	 *
@@ -42,43 +42,43 @@ class PeerRegistrationClient extends ClientChannel {
 	public PeerRegistrationClient(final ThreadGroup group, final String name, final InetSocketAddress socket_address,
 	        final Credentials user_credentials) throws IOException {
 		super(group, name, socket_address);
-		
+
 		this.user_credentials = user_credentials;
 	}
-	
+
+	/**
+	 * @return The user's credentials.
+	 */
+	public Credentials getUserCredentials() {
+
+		return new Credentials(this.user_credentials);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see p2p.components.communication.Channel#communicate()
 	 */
 	@Override
 	protected void communicate() throws IOException, InterruptedException {
-		
+
 		this.out.writeObject(new Request<>(Request.Type.REGISTER, this.user_credentials));
-		
-		LoggerManager.tracedLog(this, Level.FINE, "A new registration request was sent through the channel."); //$NON-NLS-1$
-		
+
+		LoggerManager.tracedLog(this, Level.FINE, "A new registration request was sent through the channel.");
+
 		try {
-			
+
 			Reply.getValidatedData(this.in.readObject(), Boolean.class);
-			
+
 			this.status = Status.SUCCESSFULL;
-			
+
 		} catch (ClassCastException | ClassNotFoundException ex) {
 			throw new IOException(ex);
 		} catch (@SuppressWarnings("unused") final FailedRequestException ex) {
-			
+
 			this.status = Status.FAILED;
-			
+
 		}
-		
+
 	}
-	
-	/**
-	 * @return The user's credentials.
-	 */
-	public Credentials getUserCredentials() {
-		
-		return new Credentials(this.user_credentials);
-	}
-	
+
 }

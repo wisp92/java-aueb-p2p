@@ -37,6 +37,38 @@ public class SessionManager {
 	}
 
 	/**
+	 * Updates available files of a peer.
+	 *
+	 * @param session_id
+	 *            The session id of the peer that is going to be updated.
+	 * @param username
+	 *            The username of the peer that information about the file can
+	 *            be found.
+	 * @param filename
+	 *            The filename of the file to be added.
+	 * @return If the available files of the peer updated.
+	 */
+	public boolean addDownloadFileFrom(final int session_id, final String username, final String filename) {
+
+		if (!this.isUserActive(username) || !this.file_sessions.containsKey(filename)
+		        || !this.isActiveSession(session_id))
+		    return false;
+
+		final FileDescription file = this.sessions.get(this.getSessionID(username)).getSecond().parallelStream()
+		        .filter(x -> x.getFilename().equals(filename)).findAny().orElseGet(null);
+		if (file != null) {
+
+			this.sessions.get(new Integer(session_id)).getSecond().add(file);
+			this.file_sessions.get(filename).add(new Integer(session_id));
+			return true;
+
+		}
+
+		return false;
+
+	}
+
+	/**
 	 * Adds a session with the specified session id, provided that the session
 	 * id is not locked and the username of the contact information to be added
 	 * is not already in use.
@@ -58,7 +90,8 @@ public class SessionManager {
 		if (this.isSessionIDLocked(session_id) || this.isUserActive(username) || this.isActiveSession(session_id))
 		    return false;
 
-		this.sessions.put(session_id, new Pair<>(new Pair<>(username, socket_address), new HashSet<>(files)));
+		this.sessions.put(new Integer(session_id),
+		        new Pair<>(new Pair<>(username, socket_address), new HashSet<>(files)));
 
 		/*
 		 * The set of sessions per file is also updated.
@@ -69,7 +102,7 @@ public class SessionManager {
 				this.file_sessions.put(x, new HashSet<>());
 			}
 
-			this.file_sessions.get(x).add(session_id);
+			this.file_sessions.get(x).add(new Integer(session_id));
 
 		});
 
@@ -94,7 +127,7 @@ public class SessionManager {
 
 		if (!this.isActiveSession(session_id)) return null;
 
-		return this.sessions.get(session_id).getSecond().parallelStream().map(x -> x.getFilename())
+		return this.sessions.get(new Integer(session_id)).getSecond().parallelStream().map(x -> x.getFilename())
 		        .collect(Collectors.toSet());
 
 	}
@@ -127,7 +160,7 @@ public class SessionManager {
 
 		for (int i = 0; i < max_tries_before_failure; i++) {
 
-			final int candidate = this.random_number_generator.nextInt();
+			final Integer candidate = new Integer(this.random_number_generator.nextInt());
 			if (!this.locked.contains(candidate) && !this.sessions.containsKey(candidate)) return candidate;
 
 		}
@@ -148,7 +181,7 @@ public class SessionManager {
 
 		if (!this.isActiveSession(session_id)) return null;
 
-		return new Pair<>(this.sessions.get(session_id).getFirst());
+		return new Pair<>(this.sessions.get(new Integer(session_id)).getFirst());
 
 	}
 
@@ -178,7 +211,7 @@ public class SessionManager {
 	 */
 	public boolean isActiveSession(final int session_id) {
 
-		return this.sessions.containsKey(session_id);
+		return this.sessions.containsKey(new Integer(session_id));
 	}
 
 	/**
@@ -188,7 +221,7 @@ public class SessionManager {
 	 */
 	public boolean isSessionIDLocked(final int session_id) {
 
-		return this.locked.contains(session_id);
+		return this.locked.contains(new Integer(session_id));
 	}
 
 	/**
@@ -209,11 +242,11 @@ public class SessionManager {
 	 *            The session id to be locked.
 	 * @return If the session id was locked successfully.
 	 */
-	public boolean lockSessionID(final Integer session_id) {
+	public boolean lockSessionID(final int session_id) {
 
 		if (this.isActiveSession(session_id)) return false;
 
-		return this.locked.add(session_id);
+		return this.locked.add(new Integer(session_id));
 	}
 
 	/**
@@ -229,15 +262,15 @@ public class SessionManager {
 
 		boolean removed = false;
 		final Pair<Pair<String, InetSocketAddress>, HashSet<FileDescription>> removed_session = this.sessions
-		        .remove(session_id);
+		        .remove(new Integer(session_id));
 
 		if (removed_session != null) {
 
 			removed = removed_session.getSecond().parallelStream().map(x -> x.getFilename())
-			        .map(x -> this.file_sessions.containsKey(x) ? (this.file_sessions.get(x).size() > 1
-			                ? this.file_sessions.get(x).remove(session_id) : this.file_sessions.remove(x) != null)
-			                : false)
-			        .reduce(true, (x, y) -> x && y);
+			        .map(x -> this.file_sessions.containsKey(x) ? new Boolean((this.file_sessions.get(x).size() > 1
+			                ? this.file_sessions.get(x).remove(new Integer(session_id))
+			                : this.file_sessions.remove(x) != null)) : Boolean.FALSE)
+			        .reduce(Boolean.TRUE, (x, y) -> new Boolean(x.booleanValue() && y.booleanValue())).booleanValue();
 			removed &= this.users.remove(removed_session.getFirst().getFirst());
 
 		}
@@ -259,7 +292,7 @@ public class SessionManager {
 
 		if (!this.file_sessions.containsKey(filename)) return Collections.emptyList();
 
-		return this.file_sessions.get(filename).parallelStream().map(x -> this.getPeerInformation(x))
+		return this.file_sessions.get(filename).parallelStream().map(x -> this.getPeerInformation(x.intValue()))
 		        .collect(Collectors.toList());
 	}
 
@@ -272,7 +305,7 @@ public class SessionManager {
 	 */
 	public boolean unlockSessionID(final int session_id) {
 
-		return this.locked.remove(session_id);
+		return this.locked.remove(new Integer(session_id));
 	}
 
 }

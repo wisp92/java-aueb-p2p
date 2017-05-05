@@ -1,7 +1,6 @@
 package p2p.components.trackers;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -10,6 +9,7 @@ import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import p2p.components.Configuration;
 import p2p.components.Hash;
 import p2p.components.common.Credentials;
 import p2p.components.common.FileDescription;
@@ -30,19 +30,39 @@ import p2p.utilities.LoggerManager;
 public class TrackerServerChannel extends ServerChannel {
 
 	/**
+	 * A TrackerServerChannel#UserStatus enumeration indicates the current
+	 * status of a user.
+	 *
+	 * @author {@literal p3100161 <Joseph Sakos>}
+	 */
+	public enum UserStatus {
+		/**
+		 * Indicates that the user is not currently active.
+		 */
+		ABSENT,
+		/**
+		 * Indicates that the user is currently active.
+		 */
+		PRESENT,
+		/**
+		 * Indicates that the user active and has already sent a file to another
+		 * peer.
+		 */
+		SEEDER
+	}
+
+	/**
+	 * The default time penalty that a user that has not yet send any files is
+	 * going to experience.
+	 */
+	public static final int default_peer_penalty = Configuration.getDefault().getInteger("peer_penalty", 100);
+
+	/**
 	 * If a remote host server policy is applied then the peer can indicate a
 	 * remote host as a server manager. Not recommended because a peer can take
 	 * advantage of the policy and receive no Incoming traffic.
 	 */
 	public static final boolean PEER_SERVER_REMOTE_HOST_POLICY = false;
-
-	private static <D extends Serializable> Pair<Integer, D> decodeSessionRequest(final Request<?> request,
-	        final Class<D> expected_type) {
-
-		final Pair<?, ?> pair = Pair.class.cast(request.getData());
-		return new Pair<>(Integer.class.cast(pair.getFirst()), expected_type.cast(pair.getSecond()));
-
-	}
 
 	private final TrackerDatabase database;
 
@@ -75,6 +95,84 @@ public class TrackerServerChannel extends ServerChannel {
 
 	}
 
+	private final void applyPenalty(final String username) throws InterruptedException {
+
+		if (this.getUserStatus(username) != UserStatus.SEEDER) {
+
+			LoggerManager.tracedLog(this, Level.WARNING, String.format("Apply penalty to user <%s>.", username));
+
+			Thread.sleep(TrackerServerChannel.default_peer_penalty);
+		}
+
+	}
+
+	/**
+	 * Process an acknowledge request. A acknowledge request updates the file
+	 * information of the associated users and also aplies any benefits to the
+	 * sender.
+	 *
+	 * @param request
+	 *            The request that should be processed. The session id of the
+	 *            peer sending the request, the name of the file to be
+	 *            acknowledged and the username of the sender.
+	 * @return True If the acknowledge request completed successfully.
+	 * @throws IOException
+	 *             If an error occurs while sending or receiving data from the
+	 *             streams
+	 * @throws ClassCastException
+	 *             If a unexpected data type is received.
+	 */
+	protected boolean acknowledge(final Request<?> request) throws IOException {
+
+		Pair<?, ?> pair;
+
+		pair = Pair.class.cast(request.getData());
+		final Integer session_id = Integer.class.cast(pair.getFirst());
+
+		pair = Pair.class.cast(pair.getSecond());
+		final String username = String.class.cast(pair.getFirst());
+		final String filename = String.class.cast(pair.getSecond());
+
+		if ((session_id != null) && (this.getValidUser(session_id.intValue()) != null)) {
+
+			boolean session_updated;
+
+			synchronized (this.session_manager) {
+
+				session_updated = this.session_manager.addDownloadFileFrom(session_id.intValue(), username, filename);
+
+				synchronized (this.database) {
+
+					if (this.database.fix(this.database.getSchema()) && (this.database.getUser(username) != null)) {
+						session_updated &= this.database.addDownload(username);
+					}
+
+				}
+
+			}
+
+			if (session_updated) {
+
+				this.out.writeObject(Reply.getSimpleSuccessMessage());
+
+				LoggerManager.tracedLog(this, Level.FINE,
+				        String.format("The session with id <%d> downloaded file <%s> from user with username <%s>.",
+				                session_id, filename, username));
+
+				return true;
+
+			}
+
+		}
+
+		this.out.writeObject(Reply.getSimpleFailureMessage());
+
+		LoggerManager.tracedLog(this, Level.WARNING,
+		        String.format("Could not acknowledge user with username <%s>.", username));
+
+		return false;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see p2p.components.communication.Channel#communicate()
@@ -102,6 +200,10 @@ public class TrackerServerChannel extends ServerChannel {
 				this.search(request);
 				break;
 
+			case ACKNOWLEDGE:
+				this.acknowledge(request);
+				break;
+
 			case LOGOUT:
 
 				this.logout(request);
@@ -116,38 +218,91 @@ public class TrackerServerChannel extends ServerChannel {
 				 */
 
 				LoggerManager.tracedLog(this, Level.WARNING,
-				        String.format("Detected unsupported request type with name <%s>", request_type.name())); //$NON-NLS-1$
+				        String.format("Detected unsupported request type with name <%s>", request_type.name()));
 
 			}
 
-		} catch (ClassCastException | ClassNotFoundException ex) {
+		} catch (ClassCastException | ClassNotFoundException | InterruptedException ex) {
 			throw new IOException(ex);
 		}
 
 	}
 
 	/**
+	 * Check the session manager and the database to determine the status of the
+	 * specified user. A user is characterized as absent or present depending on
+	 * if the has an active session or not.Furthermore an active user with more
+	 * than zero active downloads is considered a seeder.
+	 *
+	 * @param username
+	 *            The username of the user to be checked.
+	 * @return The status of the user.
+	 */
+	protected final UserStatus getUserStatus(final String username) {
+
+		UserStatus user_status = UserStatus.ABSENT;
+
+		synchronized (this.session_manager) {
+
+			if (this.session_manager.isUserActive(username)) {
+				user_status = UserStatus.PRESENT;
+			}
+
+		}
+
+		if (user_status != UserStatus.ABSENT) {
+
+			synchronized (this.database) {
+
+				if (this.database.fix(this.database.getSchema())) {
+
+					final Pair<Credentials, Integer> pair = this.database.getUser(username);
+
+					if (pair != null) {
+
+						if (pair.getSecond() != null) {
+							if (pair.getSecond().intValue() >= 1) {
+								user_status = UserStatus.SEEDER;
+							}
+						}
+
+					}
+
+				}
+
+			}
+
+		}
+
+		return user_status;
+
+	}
+
+	/**
 	 * Check if the session is active and corresponds to stored socket if peer
-	 * remote server host policy is applied.
+	 * remote server host policy is applied. If the session is active return the
+	 * associated username.
 	 *
 	 * @param session_id
 	 *            The session to be checked
-	 * @return True If the request is valid.
+	 * @return The associated username or null if the session is inactive.
 	 */
-	protected final boolean isValidRequest(final int session_id) {
+	protected final String getValidUser(final int session_id) {
+
+		String username = null;
 
 		synchronized (this.session_manager) {
 
 			if (this.session_manager.isActiveSession(session_id)) {
 				if (TrackerServerChannel.PEER_SERVER_REMOTE_HOST_POLICY
 				        || this.session_manager.getPeerInformation(session_id).getSecond().getAddress().getHostAddress()
-				                .equals(this.socket.getInetAddress().getHostAddress()))
-				    return true;
+				                .equals(this.socket.getInetAddress().getHostAddress())) {
+					username = this.session_manager.getPeerInformation(session_id).getFirst();
+				}
 			}
-
 		}
 
-		return false;
+		return username;
 
 	}
 
@@ -171,7 +326,8 @@ public class TrackerServerChannel extends ServerChannel {
 	 * @throws ClassNotFoundException
 	 *             If an unknown data type is received.
 	 */
-	protected boolean login(final Request<?> request) throws IOException, ClassCastException, ClassNotFoundException {
+	protected boolean login(final Request<?> request)
+	        throws IOException, ClassCastException, ClassNotFoundException, InterruptedException {
 
 		final Credentials user_credentials = Message.getData(request, Credentials.class);
 
@@ -186,12 +342,20 @@ public class TrackerServerChannel extends ServerChannel {
 		synchronized (this.database) {
 
 			if (this.database.fix(this.database.getSchema())) {
-				registered_user = this.database.getUser(user_credentials.getUsername());
+
+				final Pair<Credentials, Integer> pair = this.database.getUser(user_credentials.getUsername());
+
+				if (pair != null) {
+					registered_user = pair.getFirst();
+				}
+
 			}
 
 		}
 
 		if (registered_user != null) {
+
+			this.applyPenalty(username);
 
 			/*
 			 * Authenticate user.
@@ -222,7 +386,7 @@ public class TrackerServerChannel extends ServerChannel {
 							 */
 
 							if (session_id != null) {
-								this.session_manager.lockSessionID(session_id);
+								this.session_manager.lockSessionID(session_id.intValue());
 							}
 
 						}
@@ -236,7 +400,7 @@ public class TrackerServerChannel extends ServerChannel {
 
 					if (session_id != null) {
 
-						this.out.writeObject(new Reply<>(Reply.Type.Success, session_id));
+						this.out.writeObject(new Reply<>(Reply.Type.SUCCESS, session_id));
 
 						/*
 						 * Receive the peer's information.
@@ -271,9 +435,9 @@ public class TrackerServerChannel extends ServerChannel {
 							 * the manager.
 							 */
 
-							this.session_manager.unlockSessionID(session_id);
+							this.session_manager.unlockSessionID(session_id.intValue());
 
-							session_added = this.session_manager.addSession(session_id, username,
+							session_added = this.session_manager.addSession(session_id.intValue(), username,
 							        new InetSocketAddress(peer_reveived_host, peer_server_socket_address.getPort()),
 							        peer_shared_files);
 
@@ -285,7 +449,7 @@ public class TrackerServerChannel extends ServerChannel {
 
 							LoggerManager.tracedLog(this, Level.FINE,
 							        String.format(
-							                "A new session with id <%d> was created for the user with username <%s>.", //$NON-NLS-1$
+							                "A new session with id <%d> was created for the user with username <%s>.",
 							                session_id, user_credentials.getUsername()));
 
 							return true;
@@ -304,7 +468,7 @@ public class TrackerServerChannel extends ServerChannel {
 						 */
 
 						synchronized (this.session_manager) {
-							this.session_manager.unlockSessionID(session_id);
+							this.session_manager.unlockSessionID(session_id.intValue());
 						}
 
 					}
@@ -317,9 +481,8 @@ public class TrackerServerChannel extends ServerChannel {
 
 		this.out.writeObject(Reply.getSimpleFailureMessage());
 
-		LoggerManager.tracedLog(this, Level.WARNING,
-		        String.format("The user with username <%s> tried to login but failed.", //$NON-NLS-1$
-		                user_credentials.getUsername()));
+		LoggerManager.tracedLog(this, Level.WARNING, String
+		        .format("The user with username <%s> tried to login but failed.", user_credentials.getUsername()));
 
 		return false;
 
@@ -343,13 +506,13 @@ public class TrackerServerChannel extends ServerChannel {
 
 		final Integer session_id = Message.getData(request, Integer.class);
 
-		if ((session_id != null) && this.isValidRequest(session_id)) {
+		if ((session_id != null) && (this.getValidUser(session_id.intValue()) != null)) {
 
 			boolean session_removed;
 
 			synchronized (this.session_manager) {
 
-				session_removed = this.session_manager.removeSession(session_id);
+				session_removed = this.session_manager.removeSession(session_id.intValue());
 
 			}
 
@@ -358,8 +521,7 @@ public class TrackerServerChannel extends ServerChannel {
 				this.out.writeObject(Reply.getSimpleSuccessMessage());
 
 				LoggerManager.tracedLog(this, Level.FINE,
-				        String.format("The session with id <%d> was terminated by user's request.", //$NON-NLS-1$
-				                session_id));
+				        String.format("The session with id <%d> was terminated by user's request.", session_id));
 
 				return true;
 
@@ -369,9 +531,8 @@ public class TrackerServerChannel extends ServerChannel {
 
 		this.out.writeObject(Reply.getSimpleFailureMessage());
 
-		LoggerManager.tracedLog(this, Level.WARNING,
-		        String.format("The logout request for the session with id <%d> could not be completed successfully.", //$NON-NLS-1$
-		                session_id));
+		LoggerManager.tracedLog(this, Level.WARNING, String.format(
+		        "The logout request for the session with id <%d> could not be completed successfully.", session_id));
 
 		return false;
 	}
@@ -417,9 +578,8 @@ public class TrackerServerChannel extends ServerChannel {
 
 			this.out.writeObject(Reply.getSimpleSuccessMessage());
 
-			LoggerManager.tracedLog(this, Level.FINE,
-			        String.format("A new user with username <%s> was registered to the tracker.", //$NON-NLS-1$
-			                user_credentials.getUsername()));
+			LoggerManager.tracedLog(this, Level.FINE, String.format(
+			        "A new user with username <%s> was registered to the tracker.", user_credentials.getUsername()));
 
 		}
 		else {
@@ -427,7 +587,7 @@ public class TrackerServerChannel extends ServerChannel {
 			this.out.writeObject(Reply.getSimpleFailureMessage());
 
 			LoggerManager.tracedLog(this, Level.WARNING,
-			        String.format("A registration with username <%s> could not be completed successfully.", //$NON-NLS-1$
+			        String.format("A registration with username <%s> could not be completed successfully.",
 			                user_credentials.getUsername()));
 
 		}
@@ -449,13 +609,14 @@ public class TrackerServerChannel extends ServerChannel {
 	 *             If an error occurs while sending or receiving data from the
 	 *             streams
 	 */
-	protected boolean search(final Request<?> request) throws IOException {
+	protected boolean search(final Request<?> request) throws IOException, InterruptedException {
 
-		final Pair<Integer, String> data = TrackerServerChannel.decodeSessionRequest(request, String.class);
-		final Integer session_id = data.getFirst();
-		final String filename = data.getSecond();
+		final Pair<?, ?> pair;
 
-		boolean is_valid_session = false;
+		pair = Pair.class.cast(request.getData());
+		final Integer session_id = Integer.class.cast(pair.getFirst());
+		final String filename = String.class.cast(pair.getSecond());
+		String username = null;
 
 		LinkedList<Pair<String, InetSocketAddress>> peers_information = new LinkedList<>();
 
@@ -463,9 +624,9 @@ public class TrackerServerChannel extends ServerChannel {
 
 			synchronized (this.session_manager) {
 
-				is_valid_session = this.isValidRequest(session_id);
+				username = this.getValidUser(session_id.intValue());
 
-				if (is_valid_session) {
+				if (username != null) {
 
 					peers_information = new LinkedList<>(this.session_manager.searchFilename(filename));
 
@@ -473,9 +634,11 @@ public class TrackerServerChannel extends ServerChannel {
 
 			}
 
-			if (is_valid_session) {
+			if (username != null) {
 
-				this.out.writeObject(new Reply<>(Reply.Type.Success, peers_information));
+				this.applyPenalty(username);
+
+				this.out.writeObject(new Reply<>(Reply.Type.SUCCESS, peers_information));
 
 				return true;
 

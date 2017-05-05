@@ -9,8 +9,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import p2p.utilities.LoggerManager;
 
@@ -23,13 +26,25 @@ import p2p.utilities.LoggerManager;
  */
 public abstract class Database implements Closeable {
 
-	/*
+	/**
 	 * A Database#SchemaOperation enumeration indicates the operation that
 	 * should take place to the associated table in order to fix an
 	 * inconsistency. Used by the {@link Database#fix fix()} method.
 	 */
 	private enum SchemaOperation {
-		UNKNOWN, DROP, UPDATE;
+		/**
+		 * Indicates that no action should be taken for the specified table.
+		 */
+		NONE,
+		/**
+		 * Indicates that the table should be removed from the database.
+		 */
+		DROP,
+		/**
+		 * Indicates that the is inconsistent with the database's schema should
+		 * modified.
+		 */
+		UPDATE;
 	}
 
 	/**
@@ -38,20 +53,28 @@ public abstract class Database implements Closeable {
 	 *
 	 * @author {@literal p3100161 <Joseph Sakos>}
 	 */
-	protected enum SchemaSpecialName {
+	protected enum SpecialColumn {
 		/**
-		 * Indicates the primary keys of the table.
+		 * Indicates the primary keys of the table as String of comma separated
+		 * column names.
 		 */
-		PRIMARY_KEY("<PRIMARY_KEY>"); //$NON-NLS-1$
+		PRIMARY_KEY("<PRIMARY_KEY>");
+
+		/**
+		 * A set of all special column names.
+		 */
+		public static final Set<String> COLUMN_NAMES = Stream.of(SpecialColumn.values()).map(x -> x.getName())
+		        .collect(Collectors.toSet());
 
 		private final String name;
 
-		private SchemaSpecialName(final String name) {
+		private SpecialColumn(final String name) {
+
 			this.name = name;
 		}
 
 		/**
-		 * @return Then column name.
+		 * @return Then column's name.
 		 */
 		public final String getName() {
 
@@ -62,15 +85,15 @@ public abstract class Database implements Closeable {
 
 	private final String path;
 
-	private Connection connection	= null;
-	private boolean	   is_corrupted	= false;
+	private Connection connection			 = null;
+	private boolean	   is_database_corrupted = false;
 
 	/**
 	 * Allocates a new Database object binded to the path's location. If the
 	 * database file does not exist it is created automatically.
 	 *
 	 * @param path
-	 *            The path to the database file.
+	 *            The path to the SQLite's database file.
 	 */
 	public Database(final String path) {
 		this.path = path;
@@ -84,7 +107,7 @@ public abstract class Database implements Closeable {
 	public void close() throws IOException {
 
 		/*
-		 * Make sure that the connection is closed.
+		 * Release any resources, eg. the driver's connection.
 		 */
 		this.disconnect();
 	}
@@ -93,7 +116,7 @@ public abstract class Database implements Closeable {
 	 * Tries to establish a connection with the database. The location of the
 	 * database's file is specified during the the database's allocation.
 	 *
-	 * @return True If a connection with database was established successfully.
+	 * @return True If a connection with the database established successfully.
 	 */
 	public final boolean connect() {
 
@@ -103,18 +126,19 @@ public abstract class Database implements Closeable {
 
 				/*
 				 * Connect to the database using the SQLite JDBC driver. The
-				 * corresponding JAR file should be referenced in the
-				 * compilation classpath.
+				 * corresponding JAR file should be referenced in the build's
+				 * classpath.
 				 */
-				this.connection = DriverManager.getConnection(String.format("jdbc:sqlite:%s", this.path)); //$NON-NLS-1$
-
+				this.connection = DriverManager.getConnection(String.format("jdbc:sqlite:%s", this.path));
 				return true;
 
 			}
 
 		} catch (final SQLException ex) {
+
 			LoggerManager.tracedLog(Level.SEVERE,
-			        String.format("A connection to the database <%s> could not be established.", this.path), ex); //$NON-NLS-1$
+			        String.format("A connection to the database <%s> could not be established.", this.path), ex);
+
 		}
 
 		return false;
@@ -131,16 +155,18 @@ public abstract class Database implements Closeable {
 
 		try {
 
-			if (this.isConnected()) {
-
+			if (this.connection != null) {
+				
 				this.connection.close();
-
 				return true;
-
+				
 			}
 
 		} catch (final SQLException ex) {
-			LoggerManager.tracedLog(Level.WARNING, "The connection to the database could not be closed properly.", ex); //$NON-NLS-1$
+
+			LoggerManager.tracedLog(Level.WARNING, "The connection to the database couldn't be terminated properly.",
+			        ex);
+
 		}
 
 		return false;
@@ -148,80 +174,76 @@ public abstract class Database implements Closeable {
 	}
 
 	/**
-	 * Fixes any inconsistencies with the schema of the database.
+	 * Fixes any database's inconsistencies with the schema.
 	 *
 	 * @param schema
 	 *            The schema as described by the getSchema() method.
-	 * @return True If any inconsistencies were fixed.
+	 * @return True If database is inconsistent.
 	 */
-	public boolean fix(final HashMap<String, HashMap<String, String>> schema) {
+	public boolean fix(final Map<String, Map<String, String>> schema) {
 
-		final HashMap<String, SchemaOperation> is_ok_tables = new HashMap<>(
-		        schema.keySet().stream().parallel().collect(Collectors.toMap(x -> x, x -> SchemaOperation.UNKNOWN)));
+		/*
+		 * Store the final operations that should be applied to each table in
+		 * order to fix the database.
+		 */
+		final Map<String, SchemaOperation> is_ok_tables = schema.keySet().stream().parallel()
+		        .collect(Collectors.toMap(x -> x, x -> SchemaOperation.NONE));
 
-		try (@SuppressWarnings("hiding")
-		final Connection connection = this.getConnection()) {
+		try (final Connection tmp_connection = this.getConnection()) {
 
-			this.is_corrupted = true;
+			this.is_database_corrupted = true;
 
-			final DatabaseMetaData metadata = connection.getMetaData();
+			final DatabaseMetaData metadata = tmp_connection.getMetaData();
 
 			/*
-			 * Retrieve metadata about the database's tables.
+			 * Retrieve metadata of the database's tables.
 			 */
-
-			try (ResultSet tables = metadata.getTables(null, null, "%", null)) { //$NON-NLS-1$
+			try (final ResultSet tables = metadata.getTables(null, null, "%", null)) {
 
 				while (tables.next()) {
 
 					/*
-					 * Check table schema.
+					 * Check the schema of the specific table.
 					 */
-
-					final String table_name = tables.getString("TABLE_NAME"); //$NON-NLS-1$
+					final String table_name = tables.getString("TABLE_NAME");
 
 					if (is_ok_tables.containsKey(table_name)) {
 
 						/*
 						 * Create a map from column names to the status of the
-						 * column. Start by assuming that all columns are
+						 * column. Starts by assuming that all columns are
 						 * inconsistent.
 						 */
-
 						final HashMap<String, Boolean> is_ok_columns = new HashMap<>(schema.get(table_name).keySet()
-						        .parallelStream().filter(x -> !x.equals(SchemaSpecialName.PRIMARY_KEY.getName()))
-						        .collect(Collectors.toMap(x -> x, x -> false)));
+						        .parallelStream().filter(x -> !x.equals(SpecialColumn.PRIMARY_KEY.getName()))
+						        .collect(Collectors.toMap(x -> x, x -> Boolean.FALSE)));
 
 						/*
-						 * Retrieve metadata about the table's columns.
+						 * Retrieve metadata of the table's columns.
 						 */
-
-						try (ResultSet columns = metadata.getColumns(null, null, table_name, "%")) { //$NON-NLS-1$
+						try (final ResultSet columns = metadata.getColumns(null, null, table_name, "%")) {
 
 							/*
 							 * This loop will stop either when all columns where
 							 * checked for inconsistencies or an inconsistency
-							 * was found and the operation to fix it was
-							 * determined.
+							 * was found. In the later case the table's
+							 * operation should be set to UPDATE.
 							 */
+							while ((is_ok_tables.get(table_name) == SchemaOperation.NONE) && columns.next()) {
 
-							while ((is_ok_tables.get(table_name) == SchemaOperation.UNKNOWN) && columns.next()) {
-
-								final String column_name = columns.getString("COLUMN_NAME"); //$NON-NLS-1$
+								final String column_name = columns.getString("COLUMN_NAME");
 
 								if (is_ok_columns.containsKey(column_name)) {
 
 									final String expected_data_type = schema.get(table_name).get(column_name);
 
 									/*
-									 * Check IF the type of that column is
-									 * consistent with the schema's description
-									 * and update the table otherwise.
+									 * Check If the type of the specific column
+									 * is consistent with the schema's
+									 * description.
 									 */
-
-									if (columns.getString("TYPE_NAME") //$NON-NLS-1$
-									        .equals(expected_data_type)) {
-										is_ok_columns.put(column_name, true);
+									if (columns.getString("TYPE_NAME").equals(expected_data_type)) {
+										is_ok_columns.put(column_name, Boolean.TRUE);
 									}
 									else {
 										is_ok_tables.put(table_name, SchemaOperation.UPDATE);
@@ -231,10 +253,9 @@ public abstract class Database implements Closeable {
 								else {
 
 									/*
-									 * If the column's name is not described in
-									 * the original schema update the table.
+									 * Check If the column's name is described
+									 * in the database's schema.
 									 */
-
 									is_ok_tables.put(table_name, SchemaOperation.UPDATE);
 
 								}
@@ -243,12 +264,12 @@ public abstract class Database implements Closeable {
 
 						}
 
-						if (is_ok_columns.values().stream().parallel().filter(x -> x).count() < is_ok_columns.size()) {
-
-							/*
-							 * If one ore more columns described in the original
-							 * schema are absent update the table.
-							 */
+						/*
+						 * Check If one ore more columns described in the
+						 * database's schema are absent.
+						 */
+						if (is_ok_columns.values().stream().parallel().filter(x -> x.booleanValue())
+						        .count() < is_ok_columns.size()) {
 
 							is_ok_tables.put(table_name, SchemaOperation.UPDATE);
 
@@ -258,10 +279,9 @@ public abstract class Database implements Closeable {
 					else {
 
 						/*
-						 * If the table's name is not described in the original
-						 * schema drop the table.
+						 * Check If the table's name is described in the
+						 * database's schema.
 						 */
-
 						is_ok_tables.put(table_name, SchemaOperation.DROP);
 
 					}
@@ -272,16 +292,14 @@ public abstract class Database implements Closeable {
 
 			for (final String table_name : is_ok_tables.keySet()) {
 
-				if (is_ok_tables.get(table_name) != SchemaOperation.UNKNOWN) {
+				/*
+				 * Perform a drop of the table if the determined operation is
+				 * either UPDATE or SROP.
+				 */
+				if (is_ok_tables.get(table_name) != SchemaOperation.NONE) {
 
-					/*
-					 * Perform a drop of the table if the determined operation
-					 * is either Update or Drop.
-					 */
-
-					try (PreparedStatement statement = connection
-					        .prepareStatement(String.format("DROP TABLE IF EXISTS `%s`;", //$NON-NLS-1$
-					                table_name))) {
+					try (final PreparedStatement statement = tmp_connection
+					        .prepareStatement(String.format("DROP TABLE IF EXISTS `%s`;", table_name))) {
 
 						statement.executeUpdate();
 
@@ -289,29 +307,32 @@ public abstract class Database implements Closeable {
 
 				}
 
+				/*
+				 * Create the table If it does not exist and the determined
+				 * operation is either NONE or UPDATE.
+				 */
 				if (is_ok_tables.get(table_name) != SchemaOperation.DROP) {
 
 					/*
-					 * Create table If not exists and the determined operation
-					 * is either Unknown or Update.
+					 * Set table's primary key if any is specified in the
+					 * database's schema.
 					 */
+					final String primary_key = schema.get(table_name).containsKey(SpecialColumn.PRIMARY_KEY.getName())
+					        ? String.format(", PRIMARY KEY (%s)",
+					                schema.get(table_name).get(SpecialColumn.PRIMARY_KEY.getName()))
+					        : "";
 
-					final String primary_key = schema.get(table_name)
-					        .containsKey(SchemaSpecialName.PRIMARY_KEY.getName())
-					                ? String.format(", PRIMARY KEY (%s)", //$NON-NLS-1$
-					                        schema.get(table_name).get(SchemaSpecialName.PRIMARY_KEY.getName()))
-					                : ""; //$NON-NLS-1$
-
-					final String sql_query = String.format("CREATE TABLE IF NOT EXISTS `%s` (%s);", //$NON-NLS-1$
-					        table_name,
+					/*
+					 * Create the complete insert command based on the
+					 * database's schema.
+					 */
+					final String sql_query = String.format("CREATE TABLE IF NOT EXISTS `%s` (%s);", table_name,
 					        schema.get(table_name).entrySet().stream()
-					                .filter(x -> !x.getKey().equals(SchemaSpecialName.PRIMARY_KEY.getName()))
-					                .map(x -> String.format("`%s` %s", //$NON-NLS-1$
-					                        x.getKey(), x.getValue()))
-					                .collect(Collectors.joining(", ")) //$NON-NLS-1$
-					                + primary_key);
+					                .filter(x -> !SpecialColumn.COLUMN_NAMES.contains(x.getKey()))
+					                .map(x -> String.format("`%s` %s", x.getKey(), x.getValue()))
+					                .collect(Collectors.joining(", ")) + primary_key);
 
-					try (PreparedStatement statement = connection.prepareStatement(sql_query)) {
+					try (PreparedStatement statement = tmp_connection.prepareStatement(sql_query)) {
 
 						statement.executeUpdate();
 
@@ -321,28 +342,29 @@ public abstract class Database implements Closeable {
 
 			}
 
-			this.is_corrupted = false;
+			this.is_database_corrupted = false;
 
 		} catch (final SQLException ex) {
+
 			LoggerManager.tracedLog(Level.SEVERE,
-			        "An exception occurred while trying to fix inconsistencies in the database.", //$NON-NLS-1$
-			        ex);
+			        "An exception occurred while fixing inconsistencies with the database's schema.", ex);
+
 		}
 
-		return !this.is_corrupted;
+		return !this.is_database_corrupted;
 
 	}
 
 	/**
 	 * Establishes a connection with the database and gives direct access to the
-	 * caller. Should be used with caution or overrided by subclasses.
+	 * caller. Should be used with caution if not overrided by a subclasses.
 	 *
 	 * @return An existing or new connection to the database.
 	 */
 	public Connection getConnection() {
 
 		/*
-		 * Make sure that a connection exists.
+		 * Establishes a connection if one does not exist.
 		 */
 		this.connect();
 
@@ -353,14 +375,14 @@ public abstract class Database implements Closeable {
 	/**
 	 * Returns the schema of the database as a Map with keys the table names and
 	 * values the table descriptions. A table description is itself a Map object
-	 * with keys the column names and values the data types of the columns.A
-	 * special key <PRIMARY_KEY> can also be used to indicate the column (or
-	 * columns, separated by <,>) that is going to be used as primary key of the
-	 * table.
+	 * with keys the column names and values the data types of the columns. A
+	 * special key namely <PRIMARY_KEY> can also be used to indicate the column
+	 * (or columns, separated by <,>) that is going to be used as primary key of
+	 * the table.
 	 *
 	 * @return The schema of database.
 	 */
-	public abstract HashMap<String, HashMap<String, String>> getSchema();
+	public abstract Map<String, Map<String, String>> getSchema();
 
 	/**
 	 * @return True If a connection to the database is currently established.
@@ -372,8 +394,10 @@ public abstract class Database implements Closeable {
 			return (this.connection != null) && !this.connection.isClosed();
 
 		} catch (final SQLException ex) {
+
 			LoggerManager.tracedLog(Level.WARNING,
-			        "An exception occurred while checking if a connection with the database is established.", ex); //$NON-NLS-1$
+			        "An exception occurred while checking if a connection with the database is established.", ex);
+
 		}
 
 		return false;
@@ -381,22 +405,27 @@ public abstract class Database implements Closeable {
 	}
 
 	/**
-	 * @return True If the database is corrupted and should be fixed before it
-	 *         is used again.
+	 * Checks if the database is marked as corrupted. Errors might occur during
+	 * the execution of the queries if no action is taken to fix a corrupted
+	 * database. Of course this is just an indication. It is up to the caller
+	 * decide if to take advantage of this information and try to fix the
+	 * database.
+	 *
+	 * @return True If the database is corrupted and should be fixed before any
+	 *         queries can be executed.
 	 */
 	public final boolean isCorrupted() {
 
-		return this.is_corrupted;
+		return this.is_database_corrupted;
 
 	}
 
 	/**
-	 * Marks the database as corrupted. Should only be called when the state can
-	 * definitely be determined.
+	 * Marks the database as corrupted.
 	 */
 	protected final void setAsCorrupted() {
 
-		this.is_corrupted = true;
+		this.is_database_corrupted = true;
 	}
 
 }

@@ -16,11 +16,8 @@ import p2p.components.exceptions.FailedRequestException;
 import p2p.utilities.LoggerManager;
 
 /**
- * A SimpleDownload client object first sends a search request to the tracker
- * about a specific file. The trackers responds with a list of peers that can
- * provide the requested file. Then it sends a check alive message to all peers
- * to order them by their response time and tries get the file from a peer
- * according to the order.
+ * A SearchClient is responsible for retrieving a list peers from the tracker
+ * that can provide the requested file.
  *
  * @author {@literal p3100161 <Joseph Sakos>}
  */
@@ -40,7 +37,10 @@ public class SearchClient extends ClientChannel {
 	 * @param name
 	 *            The name of this channel.
 	 * @param socket_address
+	 *            The {@link InetSocketAddress SocketDescription} of the
+	 *            tracker's socket.
 	 * @param session_id
+	 *            The session's id of the peer.
 	 * @param filename
 	 *            The requested filename.
 	 * @throws IOException
@@ -55,6 +55,14 @@ public class SearchClient extends ClientChannel {
 		this.session_id = session_id;
 	}
 
+	/**
+	 * @return A copy of the peers list.
+	 */
+	public List<Pair<String, InetSocketAddress>> getPeerList() {
+
+		return this.peer_list.parallelStream().map(x -> new Pair<>(x)).collect(Collectors.toList());
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see p2p.components.communication.Channel#communicate()
@@ -62,10 +70,11 @@ public class SearchClient extends ClientChannel {
 	@Override
 	protected void communicate() throws IOException, InterruptedException {
 
-		this.out.writeObject(new Request<>(Request.Type.SEARCH, new Pair<>(this.session_id, this.filename)));
+		this.out.writeObject(
+		        new Request<>(Request.Type.SEARCH, new Pair<>(new Integer(this.session_id), this.filename)));
 
 		LoggerManager.tracedLog(this, Level.FINE,
-		        String.format("A new search request for the file <%s> was sent through the channel.", this.filename)); //$NON-NLS-1$
+		        String.format("A new search request for the file <%s> was sent through the channel.", this.filename));
 
 		try {
 
@@ -87,11 +96,6 @@ public class SearchClient extends ClientChannel {
 
 		}
 
-	}
-
-	public List<Pair<String, InetSocketAddress>> getPeerList() {
-
-		return this.peer_list.parallelStream().map(x -> new Pair<>(x)).collect(Collectors.toList());
 	}
 
 }

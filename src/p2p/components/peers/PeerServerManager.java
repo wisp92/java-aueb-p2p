@@ -15,9 +15,9 @@ import p2p.components.communication.ServerChannelManager;
  * @author {@literal p3100161 <Joseph Sakos>}
  */
 class PeerServerManager extends ServerChannelManager<PeerServerChannel> {
-	
+
 	private final File shared_directory;
-	
+
 	/**
 	 * Allocates a new PeerServerManager object.
 	 *
@@ -37,11 +37,11 @@ class PeerServerManager extends ServerChannelManager<PeerServerChannel> {
 	public PeerServerManager(final ThreadGroup group, final String name, final int port,
 	        final String shared_directory_path) throws IOException {
 		super(group, name, port);
-		
+
 		this.shared_directory = new File(shared_directory_path);
-		
+
 	}
-	
+
 	/**
 	 * Allocates a new PeerServerManager object that is going to listen to a
 	 * random port. Use the {@link ServerChannelManager#getSocketAddress
@@ -62,18 +62,7 @@ class PeerServerManager extends ServerChannelManager<PeerServerChannel> {
 	        throws IOException {
 		this(group, name, 0, shared_directory_path);
 	}
-	
-	/*
-	 * (non-Javadoc)
-	 * @see p2p.components.communication.ServerChannelManager#close()
-	 */
-	@Override
-	public void close() throws IOException {
-		
-		super.close();
-		
-	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see p2p.components.communication.ServerChannelManager#
@@ -83,8 +72,8 @@ class PeerServerManager extends ServerChannelManager<PeerServerChannel> {
 	@Override
 	protected PeerServerChannel newServerChannel(final ThreadGroup group, final String name, final Socket socket)
 	        throws IOException {
-		
+
 		return new PeerServerChannel(group, name, socket, this.shared_directory);
 	}
-	
+
 }

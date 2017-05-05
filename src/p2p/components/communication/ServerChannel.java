@@ -32,8 +32,6 @@ public abstract class ServerChannel extends Channel {
 	 */
 	protected final ObjectOutputStream out = this.getOutputStream();
 
-	private long last_active_time;
-
 	/**
 	 * Allocates a new ClientChannel object.
 	 *
@@ -51,17 +49,6 @@ public abstract class ServerChannel extends Channel {
 	 */
 	public ServerChannel(final ThreadGroup group, final String name, final Socket socket) throws IOException {
 		super(group, name, socket);
-
-		this.heartbit();
-	}
-
-	public void clean(final int max_inactive_time) {
-
-		if (this.isAlive() && !this.isInterrupted()
-		        && ((System.currentTimeMillis() - this.last_active_time) > max_inactive_time)) {
-			this.interrupt();
-		}
-
 	}
 
 	@Override
@@ -80,6 +67,9 @@ public abstract class ServerChannel extends Channel {
 			switch (request_type) {
 			case CHECK_ALIVE:
 
+				/*
+				 * Reply immediately to a check alive request.
+				 */
 				this.out.writeObject(Reply.getSimpleSuccessMessage());
 				break;
 
@@ -91,7 +81,13 @@ public abstract class ServerChannel extends Channel {
 			}
 
 		} catch (ClassCastException | ClassNotFoundException ex) {
+
+			/*
+			 * Any cast exception are interpreted as invalid messages and the
+			 * connection is closed immediately.
+			 */
 			throw new IOException(ex);
+
 		}
 
 	}
@@ -106,10 +102,5 @@ public abstract class ServerChannel extends Channel {
 	 *             {@link Socket} object's streams.
 	 */
 	protected abstract void communicate(Request<?> request) throws IOException;
-
-	public final void heartbit() {
-
-		this.last_active_time = System.currentTimeMillis();
-	}
-
+	
 }

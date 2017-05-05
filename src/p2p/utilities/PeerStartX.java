@@ -18,7 +18,7 @@ import p2p.utilities.common.Instructable;
  * @author {@literal p3100161 <Joseph Sakos>}
  */
 public class PeerStartX extends StartX {
-	
+
 	/**
 	 * The Command enumeration indicates the commands that the PeerStartX object
 	 * can handle.
@@ -29,28 +29,29 @@ public class PeerStartX extends StartX {
 		/**
 		 * Indicates a registration command.
 		 */
-		REGISTER("register"), //$NON-NLS-1$
+		REGISTER("register"),
 		/**
 		 * Indicates a command to login to the tracker.
 		 */
-		LOGIN("login"), //$NON-NLS-1$
+		LOGIN("login"),
 		/**
 		 * Indicates a command to logout from the tracker.
 		 */
-		LOGOUT("logout"), //$NON-NLS-1$
+		LOGOUT("logout"),
 		/**
 		 * Indicates a command to update the tracker's information.
 		 */
-		SET_TRACKER("set tracker"), //$NON-NLS-1$
+		SET_TRACKER("set tracker"),
 		/**
 		 * Indicates a command to change the shared directory's location.
 		 */
-		SET_SHARED_DIRECTORY("set shared_directory"), //$NON-NLS-1$
+		SET_SHARED_DIRECTORY("set shared_directory"),
+
 		/**
 		 * Indicates a command to exit the interface.
 		 */
 		EXIT("exit"); // $NON-NLS-4$
-		
+
 		/**
 		 * Searches the enumeration for a Command object that can be associated
 		 * with the given text.
@@ -64,28 +65,28 @@ public class PeerStartX extends StartX {
 		 *             text.
 		 */
 		public static Command find(final String text) throws NoSuchElementException {
-			
+
 			return Instructable.find(Command.class, text);
 		}
-		
+
 		private final String text;
-		
+
 		private Command(final String text) {
-			
+
 			this.text = text;
 		}
-		
+
 		/*
 		 * (non-Javadoc)
 		 * @see p2p.common.Instructable#getText()
 		 */
 		@Override
 		public String getText() {
-			
+
 			return this.text;
 		}
 	}
-	
+
 	/**
 	 * Starts the execution of the peer.
 	 *
@@ -93,25 +94,25 @@ public class PeerStartX extends StartX {
 	 *            The console arguments.
 	 */
 	public static void main(final String[] args) {
-		
-		final ThreadGroup peers = new ThreadGroup("Peers"); //$NON-NLS-1$
-		
+
+		final ThreadGroup peers = new ThreadGroup("Peers");
+
 		try (Scanner in_scanner = new Scanner(System.in); PrintWriter out_writer = new PrintWriter(System.out)) {
-			
+
 			try (Peer peer = new Peer(peers, Peer.class.getSimpleName())) {
-				
+
 				new PeerStartX(peer, in_scanner, out_writer).start();
-				
+
 			} catch (final IOException ex) {
-				LoggerManager.tracedLog(Level.WARNING, "The peer could not be terminated properly.", ex); //$NON-NLS-1$
+				LoggerManager.tracedLog(Level.WARNING, "The peer could not be terminated properly.", ex);
 			}
-			
+
 		}
-		
+
 	}
-	
+
 	private final Peer peer;
-	
+
 	/**
 	 * Allocates a new PeerStartX object.
 	 *
@@ -125,103 +126,101 @@ public class PeerStartX extends StartX {
 	 *            prompts and the program's messages.
 	 */
 	public PeerStartX(final Peer peer, final Scanner in, final PrintWriter out) {
-		
+
 		super(in, out);
-		
+
 		this.peer = peer;
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see p2p.common.StartX#getInput(java.lang.String)
 	 */
 	@Override
 	public String getInput(final String prompt) {
-		
-		this.out.print("Peer> "); //$NON-NLS-1$
-		
+
+		this.out.print("Peer> ");
+
 		return super.getInput(prompt);
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see p2p.common.StartX#start()
 	 */
 	@Override
 	public void start() {
-		
+
 		Command last_command = null;
-		
+
 		do {
-			
+
 			try {
-				
+
 				last_command = Command.find(this.getInput(null));
-				
+
 				switch (last_command) {
 				case SET_TRACKER:
-					
-					if (!this.peer.setTracker(new InetSocketAddress(this.getInput("host"), //$NON-NLS-1$
-					        Integer.parseInt(this.getInput("port"))))) { //$NON-NLS-1$
+
+					if (!this.peer.setTracker(
+					        new InetSocketAddress(this.getInput("host"), Integer.parseInt(this.getInput("port"))))) {
 						System.out.println("Could not update the tracker's information.");
 					}
-					
+
 					break;
-				
+
 				case SET_SHARED_DIRECTORY:
-					
-					if (!this.peer.setSharedDirectory(this.getInput("path to shared directory"))) { //$NON-NLS-1$
+
+					if (!this.peer.setSharedDirectory(this.getInput("path to shared directory"))) {
 						System.out.println("Could not update the shared didrectory's location.");
 					}
-					
+
 					break;
-				
+
 				case REGISTER:
-					
-					if (this.peer.register(new Credentials(this.getInput("username"), //$NON-NLS-1$
-					        this.getInput("password")))) {//$NON-NLS-1$
+
+					if (this.peer.register(new Credentials(this.getInput("username"), this.getInput("password")))) {//$NON-NLS-2$
 						System.out.println("Registration was successful.");
 					}
 					else {
 						System.out.println("Registration failed.");
 					}
-					
+
 					break;
-				
+
 				case LOGIN:
-					
-					if (this.peer.login(new Credentials(this.getInput("username"), //$NON-NLS-1$
-					        this.getInput("password")))) {//$NON-NLS-1$
+
+					if (this.peer.login(new Credentials(this.getInput("username"), this.getInput("password")))) {//$NON-NLS-2$
 						System.out.println("Login was successful.");
 					}
 					else {
 						System.out.println("Login failed.");
 					}
-					
+
 					break;
-				
+
 				case LOGOUT:
-					
+
 					if (this.peer.logout()) {// $NON-NLS-1$
 						System.out.println("Logout was successful.");
 					}
 					else {
 						System.out.println("Logout failed.");
 					}
-					
+
 					break;
-				
+
 				case EXIT:
 				default:
 					break;
 				}
-				
+
 			} catch (@SuppressWarnings("unused") final NoSuchElementException ex) {
-				this.out.println("Unrecognized command"); //$NON-NLS-1$
+				this.out.println("Unrecognized command");
 			}
-			
+
 		} while (last_command != Command.EXIT);
-		
+
 	}
-	
+
 }

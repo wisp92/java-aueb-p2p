@@ -7,13 +7,14 @@ import java.time.temporal.ValueRange;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Random;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import p2p.components.Configuration;
 import p2p.components.common.Credentials;
 import p2p.components.communication.CloseableThread;
 import p2p.components.peers.Peer;
@@ -29,7 +30,13 @@ import p2p.utilities.common.Instructable;
  */
 public class PeerTester extends CloseableThread {
 	
-	public enum Behavior {
+	/**
+	 * A PeerTesterBehavior enumeration indicates the available behaviors of the
+	 * {@link PeerTester.TestablePeer TestablePeer} objects
+	 *
+	 * @author {@literal p3100161 <Joseph Sakos>}
+	 */
+	public enum Behavior implements Instructable {
 		
 		/**
 		 * Indicate that the peer is going to wait some time to give a chance to
@@ -37,52 +44,23 @@ public class PeerTester extends CloseableThread {
 		 * waits for them to finish before closing. More peers could connect
 		 * while waiting for the transfers to finish. professional
 		 */
-		GENTLE,
+		GENTLE("gentle"),
+		/**
+		 * Indicates a behavior similar to gentle but waits some more time after
+		 * all transactions finish. It is not accepting connection during that
+		 * time.
+		 */
+		PATIENT("patient"),
 		/**
 		 * Indicates a behavior similar to gentle but does not accept peers
 		 * after the initial waiting time.
 		 */
-		PROFESSIONAL,
+		PROFESSIONAL("professional"),
 		/**
 		 * Indicates that the peer is not going to wait at all just look for
 		 * some files, download them and close.
 		 */
-		FAST;
-		
-		public static Behavior getRandomBehavior() {
-			
-			final List<Behavior> list = Arrays.asList(Behavior.values());
-			
-			if (list.size() > 0) {
-				Collections.shuffle(list);
-				return list.get(0);
-			}
-			
-			return null;
-			
-		}
-		
-	}
-	
-	/**
-	 * The PeerTester.Command indicates the commands that can be passed from the
-	 * command line as arguments.
-	 *
-	 * @author {@literal p3100161 <Joseph Sakos>}
-	 */
-	public enum Command implements Instructable {
-		/**
-		 * Indicates a command to to set the tracker's port.
-		 */
-		SET_NO_PEERS("-p"), //$NON-NLS-1$
-		/**
-		 * Indicates a command to set test's tempo.
-		 */
-		SET_TEMPO("-t"), //$NON-NLS-1$
-		/**
-		 * Indicates a command to set database's path.
-		 */
-		SET_DATABASE_PATH("-dp"); //$NON-NLS-1$
+		FAST("fast");
 		
 		/**
 		 * Searches the enumeration for a Command object that can be associated
@@ -96,14 +74,30 @@ public class PeerTester extends CloseableThread {
 		 *             If no Command object can be associated with the given
 		 *             text.
 		 */
-		public static Command find(final String text) throws NoSuchElementException {
+		public static Behavior find(final String text) throws NoSuchElementException {
 			
-			return Instructable.find(Command.class, text);
+			return Instructable.find(Behavior.class, text);
+		}
+		
+		/**
+		 * @return A random behavior of the available.
+		 */
+		public static Behavior getRandomBehavior() {
+			
+			final List<Behavior> list = Arrays.asList(Behavior.values());
+			
+			if (list.size() > 0) {
+				Collections.shuffle(list);
+				return list.get(0);
+			}
+			
+			return null;
+			
 		}
 		
 		private final String text;
 		
-		private Command(final String text) {
+		private Behavior(final String text) {
 			
 			this.text = text;
 		}
@@ -117,6 +111,7 @@ public class PeerTester extends CloseableThread {
 			
 			return this.text;
 		}
+		
 	}
 	
 	/**
@@ -130,10 +125,13 @@ public class PeerTester extends CloseableThread {
 		
 		private Credentials	user_credentials;
 		private List<File>	available_files;
-		private int			no_successful_logins		= 0;
-		private int			no_successful_registrations	= 0;
-		private int			no_successful_logouts		= 0;
-		private int			no_requested_downloads		= 0;
+		private ValueRange	peer_waiting_interval;
+		private Behavior	behavior;
+		
+		private int	 no_successful_logins		 = 0;
+		private int	 no_successful_registrations = 0;
+		private int	 no_successful_logouts		 = 0;
+		private long no_requested_downloads		 = 0;
 		
 		/**
 		 * Allocates a new TestablePeer object.
@@ -151,6 +149,11 @@ public class PeerTester extends CloseableThread {
 			
 			return this.available_files == null ? Collections.emptyList() : this.available_files;
 			
+		}
+		
+		public long getRequestedDownloads() {
+			
+			return this.no_requested_downloads;
 		}
 		
 		/**
@@ -176,11 +179,6 @@ public class PeerTester extends CloseableThread {
 		public int getSuccessfulRegistrations() {
 			
 			return this.no_successful_registrations;
-		}
-		
-		public int getRequestedDownloads() {
-			
-			return this.no_requested_downloads;
 		}
 		
 		/**
@@ -209,11 +207,11 @@ public class PeerTester extends CloseableThread {
 		public void run() {
 			
 			if (!this.isUserCredentialsSet()) {
-				LoggerManager.tracedLog(this, Level.WARNING, "The user's credentials have not been set."); //$NON-NLS-1$
+				LoggerManager.tracedLog(this, Level.WARNING, "The user's credentials have not been set.");
 			}
 			
 			if (!this.isSharedDirecorySet()) {
-				LoggerManager.tracedLog(this, Level.WARNING, "The user's shared directory has not been set."); //$NON-NLS-1$
+				LoggerManager.tracedLog(this, Level.WARNING, "The user's shared directory has not been set.");
 			}
 			
 			/*
@@ -261,29 +259,27 @@ public class PeerTester extends CloseableThread {
 			 * Select a random waiting time.
 			 */
 			final long peer_waiting_time = (new Random())
-			        .nextInt((int) (PeerTester.default_peer_waiting_interval.getMaximum()
-			                - PeerTester.default_peer_waiting_interval.getMinimum()))
-			        + PeerTester.default_peer_waiting_interval.getMinimum();
+			        .nextInt((int) (this.peer_waiting_interval.getMaximum() - this.peer_waiting_interval.getMinimum()))
+			        + this.peer_waiting_interval.getMinimum();
 			
 			/*
 			 * Develop a peers behavior at random.
 			 */
 			
-			final Behavior behavior = Behavior.getRandomBehavior();
-			
-			LoggerManager.tracedLog(Level.INFO, String.format("The peer adapted the %s behavior", behavior.toString())); //$NON-NLS-1$
+			LoggerManager.tracedLog(Level.INFO,
+			        String.format("The peer adapted the %s behavior", this.behavior.toString()));
 			
 			try {
 				
 				/*
 				 * Wait some time for other peers to initialize and connect.
 				 */
-				if (behavior != Behavior.FAST) {
+				if (this.behavior != Behavior.FAST) {
 					Thread.sleep(peer_waiting_time);
 				}
 				
 			} catch (final InterruptedException ex) {
-				LoggerManager.tracedLog(this, Level.WARNING, "The peer's test was interrupted.", ex); //$NON-NLS-1$
+				LoggerManager.tracedLog(this, Level.WARNING, "The peer's test was interrupted.", ex);
 			}
 			
 			/*
@@ -294,15 +290,33 @@ public class PeerTester extends CloseableThread {
 				this.no_requested_downloads++;
 			}
 			
-			if (behavior == Behavior.PROFESSIONAL) {
+			if (this.behavior == Behavior.PROFESSIONAL) {
 				this.stopManager(true);
 			}
 			
 			while (true) {
 				if ((CloseableThread.countActive(this.clients_group) == 0)
-				        && ((behavior == Behavior.FAST) || (this.numberOfActiveServers() == 0))) {
+				        && ((this.behavior == Behavior.FAST) || (this.numberOfActiveServers() == 0))) {
 					break;
 				}
+			}
+			
+			try {
+				
+				/*
+				 * Wait some time, not accepting connections, for the
+				 * acknowledge requests to complete.
+				 */
+				if (this.behavior == Behavior.PATIENT) {
+					
+					this.stopManager(true);
+					
+					Thread.sleep(peer_waiting_time);
+					
+				}
+				
+			} catch (final InterruptedException ex) {
+				LoggerManager.tracedLog(this, Level.WARNING, "The peer's test was interrupted.", ex);
 			}
 			
 			if (this.logout()) {
@@ -314,7 +328,7 @@ public class PeerTester extends CloseableThread {
 				this.close();
 				
 			} catch (final IOException ex) {
-				LoggerManager.tracedLog(this, Level.WARNING, "The peer could not be terminated properly.", ex); //$NON-NLS-1$
+				LoggerManager.tracedLog(this, Level.WARNING, "The peer could not be terminated properly.", ex);
 			}
 			
 		}
@@ -326,6 +340,33 @@ public class PeerTester extends CloseableThread {
 			this.available_files = available_files;
 			
 			return true;
+		}
+		
+		public boolean setBehavior(final String text) {
+			
+			if (this.isAlive()) return false;
+			
+			try {
+				
+				this.behavior = Behavior.find(text);
+				
+			} catch (final NoSuchElementException ex) {
+				
+				this.behavior = Behavior.getRandomBehavior();
+				
+			}
+			
+			return true;
+		}
+		
+		public boolean setPeerWaitingInterval(final ValueRange peer_waiting_interval) {
+			
+			if (this.isAlive()) return false;
+			
+			this.peer_waiting_interval = peer_waiting_interval;
+			
+			return true;
+			
 		}
 		
 		/**
@@ -347,42 +388,6 @@ public class PeerTester extends CloseableThread {
 	}
 	
 	/**
-	 * The default no of peers to run in parallel.
-	 */
-	public static final int	default_no_peers	  = 1;
-	/**
-	 * The default number milliseconds to sleep when requested.
-	 */
-	public static final int	default_sleep_time	  = 1000;
-	/**
-	 * The delay in milliseconds between time delicate Processes. If it set to 0
-	 * then no delay between any process is going to be added.
-	 */
-	public static final int	default_tempo		  = 1;
-	/**
-	 * Indicates the minimum number of sample files that are going to be copied
-	 * to the peer's shared directory before the execution.
-	 */
-	public static final int	min_files_sample_size = 2;
-	
-	public static final ValueRange default_peer_waiting_interval = ValueRange.of(3000, 6000);
-	
-	/**
-	 * Indicates the default directory of the databases.
-	 */
-	public static final String default_databases_directory = "databases";						 //$NON-NLS-1$
-	/**
-	 * The default path to the tracker's database file.
-	 */
-	public static final String default_database_path	   = String.format("%s/%s",				 //$NON-NLS-1$
-	        PeerTester.default_databases_directory, "default_tracker.sqlite");					 //$NON-NLS-1$
-	/**
-	 * The default directory where the shared directories of the peers are going
-	 * to be created.
-	 */
-	public static final String default_shared_directory	   = "shared/peers";					 //$NON-NLS-1$
-	
-	/**
 	 * Starts the execution of the tracker.
 	 *
 	 * @param args
@@ -390,79 +395,83 @@ public class PeerTester extends CloseableThread {
 	 */
 	public static void main(final String[] args) {
 		
-		int no_peers = PeerTester.default_no_peers;
-		int tempo = PeerTester.default_tempo;
-		String database_path = PeerTester.default_database_path;
+		Configuration.setAsDefault(new Configuration("configuration.properties"));
 		
 		/*
-		 * Load some parameters from the console.
+		 * Create a new ThreadGroup to add tests and execute them.
 		 */
 		
-		try {
+		final ThreadGroup testers = CloseableThread.newThreadGroup("Testers");
+		
+		try (PeerTester tester = new PeerTester(testers, "Tester");) {
 			
-			for (int i = 0; i < args.length; i += 2) {
-				
-				switch (Command.find(args[i])) {
-				case SET_NO_PEERS:
-					
-					no_peers = Integer.parseInt(args[i + 1]);
-					break;
-				
-				case SET_TEMPO:
-					
-					tempo = Integer.parseInt(args[i + 1]);
-					break;
-				
-				case SET_DATABASE_PATH:
-					
-					database_path = args[i + 1];
-					break;
-				
-				}
-			}
+			tester.start();
+			tester.join();
 			
-			final File databases_directory = new File(new File(database_path).getParent());
-			
-			/*
-			 * Check if the database's directory exist.
-			 */
-			
-			if (!databases_directory.isDirectory()) {
-				LoggerManager.tracedLog(Level.SEVERE,
-				        String.format("The specified database's directory <%s> does not exist.", databases_directory)); //$NON-NLS-1$
-			}
-			else {
-				
-				/*
-				 * Create a new ThreadGroup to add tests and execute them.
-				 */
-				
-				final ThreadGroup testers = new ThreadGroup("Testers"); //$NON-NLS-1$
-				
-				try (PeerTester tester = new PeerTester(testers, "Tester", database_path, no_peers, tempo);) { //$NON-NLS-1$
-					
-					tester.start();
-					tester.join();
-					
-				} catch (final IOException ex) {
-					LoggerManager.tracedLog(Level.SEVERE, "An IOException occurred during the test.", ex); //$NON-NLS-1$
-				} catch (final InterruptedException ex) {
-					LoggerManager.tracedLog(Level.WARNING, "The test was interrupted.", ex); //$NON-NLS-1$
-				}
-				
-			}
-			
-		} catch (final NoSuchElementException ex) {
-			LoggerManager.tracedLog(Level.SEVERE, "Unrecognized command line argument", ex); //$NON-NLS-1$
+		} catch (final IOException ex) {
+			LoggerManager.tracedLog(Level.SEVERE, "An IOException occurred during the test.", ex);
+		} catch (final InterruptedException ex) {
+			LoggerManager.tracedLog(Level.WARNING, "The test was interrupted.", ex);
 		}
 		
 	}
 	
-	private final ThreadGroup trackers_group = new ThreadGroup(String.format("%s.Trackers", this.getName())); //$NON-NLS-1$
-	private final ThreadGroup peers_group	 = new ThreadGroup(String.format("%s.Peers", this.getName()));	  //$NON-NLS-1$
-	private final int		  no_peers;
-	private final int		  tempo;
-	private final String	  database_path;
+	private final ThreadGroup trackers_group = CloseableThread.newThreadGroup(this, "Trackers");
+	private final ThreadGroup peers_group	 = CloseableThread.newThreadGroup(this, "Peers");
+	
+	/**
+	 * The default configuration file of the tester.
+	 */
+	private final Configuration	configuration;
+	/**
+	 * The default no of peers to run in parallel.
+	 */
+	private final int			no_peers;
+	/**
+	 * The default number milliseconds to sleep when requested.
+	 */
+	private final int			sleep_time;
+	/**
+	 * The delay in milliseconds between time delicate Processes. If it set to 0
+	 * then no delay between any process is going to be added.
+	 */
+	private final int			tempo;
+	/**
+	 * Indicates the minimum number of sample files that are going to be copied
+	 * to the peer's shared directory before the execution.
+	 */
+	private final int			min_sample_files;
+	
+	/**
+	 * Indicates the range of time interval a peer is going to wait for incoming
+	 * connections.
+	 */
+	private final ValueRange peer_waiting_interval;
+	
+	/**
+	 * Indicates the default directory of the databases.
+	 */
+	private final String databases_directory;
+	
+	/**
+	 * The default directory where the shared directories of the peers are going
+	 * to be created.
+	 */
+	private final String shared_directory;
+	
+	/**
+	 * Indicates the default mode for selecting behaviors of the peers. Can be
+	 * either one of <all, gentle, professional, patient, fast>
+	 */
+	private final String behavior_mode;
+	
+	/**
+	 * Indicate if the shared files are going to be deleted automatically after
+	 * the test.
+	 */
+	private final boolean delete_shared_files;
+	
+	private final String database_path;
 	
 	/**
 	 * Allocates a new PeerTester object.
@@ -471,23 +480,35 @@ public class PeerTester extends CloseableThread {
 	 *            The {@link ThreadGroup} object that this tester belongs to.
 	 * @param name
 	 *            The name of this channel.
-	 * @param no_peers
-	 *            The number of peers to run in parallel.
-	 * @param database_path
-	 *            The path to the tracker's database file.
-	 * @param tempo
-	 *            The delay in milliseconds between time delicate Processes.
 	 */
-	public PeerTester(final ThreadGroup group, final String name, final String database_path, final int no_peers,
-	        final int tempo) {
+	public PeerTester(final ThreadGroup group, final String name) {
 		super(group, name);
 		
-		this.no_peers = no_peers > 0 ? no_peers : PeerTester.default_no_peers;
-		this.tempo = tempo >= 0 ? tempo : PeerTester.default_tempo;
+		this.configuration = new Configuration(Configuration.getDefault().getString("test_configuration"));
 		
-		final File database_file = new File(database_path);
-		this.database_path = database_file.exists() && database_file.isFile() ? database_path
-		        : PeerTester.default_database_path;
+		this.no_peers = this.configuration.getInteger("no_peers", 1);
+		this.tempo = this.configuration.getInteger("tempo", 1);
+		this.sleep_time = this.configuration.getInteger("sleep_time", 1000);
+		this.min_sample_files = this.configuration.getInteger("min_sample_files", 2);
+		this.peer_waiting_interval = ValueRange.of(this.configuration.getInteger("min_peer_waiting_time", 3000),
+		        this.configuration.getInteger("max_peer_waiting_time", 6000));
+		this.databases_directory = this.configuration.getString("database_directory", "databases");
+		this.shared_directory = this.configuration.getString("shared_directory_path", "shared/peers");
+		this.behavior_mode = this.configuration.getString("behavior_mode", "all");
+		this.delete_shared_files = this.configuration.getBoolean("delete_shared_files", false);
+		
+		final File database_directory_file = new File(this.databases_directory);
+		if (database_directory_file.exists()) {
+			if (!database_directory_file.isDirectory()) {
+				LoggerManager.tracedLog(Level.SEVERE,
+				        String.format("The database directory <%s> corresponds to a file.", this.databases_directory));
+			}
+		}
+		else {
+			database_directory_file.mkdirs();
+		}
+		
+		this.database_path = (new File(database_directory_file, "default_tracker.sqlite")).getAbsolutePath();
 		
 	}
 	
@@ -498,17 +519,8 @@ public class PeerTester extends CloseableThread {
 	@Override
 	public void close() throws IOException {
 		
-		synchronized (this.trackers_group) {
-			
-			CloseableThread.interrupt(this.trackers_group);
-			
-		}
-		
-		synchronized (this.peers_group) {
-			
-			CloseableThread.interrupt(this.peers_group);
-			
-		}
+		CloseableThread.interrupt(this.trackers_group);
+		CloseableThread.interrupt(this.peers_group);
 		
 	}
 	
@@ -519,7 +531,7 @@ public class PeerTester extends CloseableThread {
 	@Override
 	public void run() {
 		
-		try (Tracker tracker = new Tracker(this.trackers_group, String.format("%s.Tracker", this.getName()))) { //$NON-NLS-1$
+		try (Tracker tracker = new Tracker(this.trackers_group, String.format("%s.Tracker", this.getName()))) {
 			
 			if (tracker.startManager(0, this.database_path)) {
 				
@@ -530,7 +542,8 @@ public class PeerTester extends CloseableThread {
 					
 					for (int i = 0; i < this.no_peers; i++) {
 						
-						final Credentials user_credentials = new Credentials(String.format("user-%d", i), null); //$NON-NLS-1$
+						final Credentials user_credentials = new Credentials(String.format("user-%d", new Integer(i)),
+						        null);
 						
 						/*
 						 * The close() method of the PeerTester makes sure to
@@ -538,7 +551,7 @@ public class PeerTester extends CloseableThread {
 						 */
 						@SuppressWarnings("resource")
 						final TestablePeer peer = new TestablePeer(this.peers_group,
-						        String.format("%s.Peer-%d", this.getName(), i)); //$NON-NLS-1$
+						        String.format("%s.Peer-%d", this.getName(), new Integer(i)));
 						
 						/*
 						 * The tracker's description, user credentials and the
@@ -547,11 +560,13 @@ public class PeerTester extends CloseableThread {
 						 */
 						if (peer.setTracker(tracker_socket_address)
 						        && TestHelper.newSharedDirectory(peer,
-						                String.format("%s/%s_shared", PeerTester.default_shared_directory, //$NON-NLS-1$
-						                        peer.getName()),
-						                PeerTester.min_files_sample_size)
-						        && peer.setUserCredentials(user_credentials) && peer.setAvailableFiles(
-						                TestHelper.getDefaultSharedFiles(TestHelper.default_sample_list_path))) {
+						                String.format("%s/%s_shared", this.shared_directory, peer.getName()),
+						                this.min_sample_files)
+						        && peer.setUserCredentials(user_credentials)
+						        && peer.setAvailableFiles(
+						                TestHelper.getDefaultSharedFiles(TestHelper.default_sample_list_path))
+						        && peer.setBehavior(this.behavior_mode)
+						        && peer.setPeerWaitingInterval(this.peer_waiting_interval)) {
 							
 							peer.start();
 							peers.add(peer);
@@ -569,63 +584,80 @@ public class PeerTester extends CloseableThread {
 					
 					while (CloseableThread.countActive(this.peers_group) > 0) {
 						
-						LoggerManager.tracedLog(this, Level.INFO, String.format("%d from %d active peers", //$NON-NLS-1$
-						        CloseableThread.countActive(this.peers_group), this.no_peers));
+						LoggerManager.tracedLog(this, Level.INFO,
+						        String.format("%d from %d active peers",
+						                new Integer(CloseableThread.countActive(this.peers_group)),
+						                new Integer(this.no_peers)));
 						
-						Thread.sleep(PeerTester.default_sleep_time);
+						Thread.sleep(this.sleep_time);
 					}
 					
-					final List<File> shared_files = peers.parallelStream().filter(x -> x.isSharedDirecorySet())
+					final Set<File> finished_shared_files = peers.parallelStream().filter(x -> x.isSharedDirecorySet())
 					        .flatMap(x -> Arrays.asList(new File(x.getSharedDirectory()).listFiles()).parallelStream())
-					        .distinct().collect(Collectors.toList());
-					final long count_successful_peer_logins = peers.parallelStream()
-					        .filter(x -> x.getSuccessfulLogins() > 0).count();
-					final long count_successful_peer_registrations = peers.parallelStream()
-					        .filter(x -> x.getSuccessfulRegistrations() > 0).count();
-					final long count_successful_peer_logouts = peers.parallelStream()
-					        .filter(x -> x.getSuccessfulLogouts() > 0).count();
-					final long count_requested_downloads = peers.parallelStream().map(x -> x.getRequestedDownloads())
-					        .reduce(0, (x, y) -> x + y);
-					final long count_successful_downloads = peers.parallelStream().map(x -> x.getCompletedDownloads())
-					        .reduce((long) 0, (x, y) -> x + y);
-					final List<File> downloaded_files = peers.parallelStream()
-					        .flatMap(x -> x.getDownloadedFiles().stream()).collect(Collectors.toList());
+					        .distinct().collect(Collectors.toSet());
+					final Long count_successful_peer_logins = new Long(
+					        peers.parallelStream().filter(x -> x.getSuccessfulLogins() > 0).count());
+					final Long count_successful_peer_registrations = new Long(
+					        peers.parallelStream().filter(x -> x.getSuccessfulRegistrations() > 0).count());
+					final Long count_successful_peer_logouts = new Long(
+					        peers.parallelStream().filter(x -> x.getSuccessfulLogouts() > 0).count());
+					final Long count_requested_downloads = peers.parallelStream()
+					        .map(x -> new Long(x.getRequestedDownloads()))
+					        .reduce(new Long(0), (x, y) -> new Long(x.longValue() + y.longValue()));
+					final Long count_successful_downloads = peers.parallelStream()
+					        .map(x -> new Long(x.getCompletedDownloads()))
+					        .reduce(new Long(0), (x, y) -> new Long(x.longValue() + y.longValue()));
+					final Long count_acknowledged_downloads = peers.parallelStream()
+					        .map(x -> new Long(x.getAcknowledgedDownloads()))
+					        .reduce(new Long(0), (x, y) -> new Long(x.longValue() + y.longValue()));
+					final Set<File> downloaded_files = peers.parallelStream()
+					        .flatMap(x -> x.getDownloadedFiles().stream()).collect(Collectors.toSet());
+					
+					LoggerManager.tracedLog(this, Level.INFO, String.format(
+					        "%d peer(s) were able to register successfully.", count_successful_peer_registrations));
+					LoggerManager.tracedLog(this, Level.INFO,
+					        String.format("%d peer(s) were able to login successfully.", count_successful_peer_logins));
+					LoggerManager.tracedLog(this, Level.INFO, String
+					        .format("%d peer(s) were able to logout successfully.", count_successful_peer_logouts));
+					
+					final Set<File> initial_shared_files = finished_shared_files.stream().collect(Collectors.toSet());
+					initial_shared_files.removeAll(downloaded_files);
+					LoggerManager.tracedLog(this, Level.INFO,
+					        String.format("The initial sample of shared files contained %d files.",
+					                new Integer(initial_shared_files.size())));
+					
+					LoggerManager.tracedLog(this, Level.INFO, String.format(
+					        "%d from %d downloads completed successfully (Validity Check: %b).",
+					        count_successful_downloads, count_requested_downloads,
+					        new Boolean(count_successful_downloads
+					                .longValue() == (finished_shared_files.size() - initial_shared_files.size()))));
 					
 					LoggerManager.tracedLog(this, Level.INFO,
-					        String.format("%d peer(s) were able to register successfully.", //$NON-NLS-1$
-					                count_successful_peer_registrations));
-					LoggerManager.tracedLog(this, Level.INFO,
-					        String.format("%d peer(s) were able to login successfully.", //$NON-NLS-1$
-					                count_successful_peer_logins));
-					LoggerManager.tracedLog(this, Level.INFO,
-					        String.format("%d peer(s) were able to logout successfully.", //$NON-NLS-1$
-					                count_successful_peer_logouts));
-					LoggerManager.tracedLog(this, Level.INFO,
-					        String.format("%d from %d downloads completed successfully.", //$NON-NLS-1$
-					                count_successful_downloads, count_requested_downloads));
+					        String.format("%d from %d successful downloads were acknowledged by the tracker.",
+					                count_acknowledged_downloads, count_successful_downloads));
 					
 					LoggerManager.tracedLog(this, Level.INFO,
-					        String.format("The following files have been downloaded: %s", //$NON-NLS-1$
-					                downloaded_files.stream().map(x -> x.getAbsolutePath()).collect(Collectors.toList())
-					                        .toString()));
-					
+					        String.format("The following files was the initial sample: %s", initial_shared_files
+					                .stream().map(x -> x.getAbsolutePath()).collect(Collectors.toList()).toString()));
 					LoggerManager.tracedLog(this, Level.INFO,
-					        String.format("The initial sample of shared files contained %d files.", //$NON-NLS-1$
-					                shared_files.size()));
+					        String.format("The following files have been downloaded: %s", downloaded_files.stream()
+					                .map(x -> x.getAbsolutePath()).collect(Collectors.toList()).toString()));
 					
 					/*
 					 * Delete all shared files.
 					 */
-					shared_files.parallelStream().forEach(x -> x.delete());
+					if (this.delete_shared_files) {
+						finished_shared_files.parallelStream().forEach(x -> x.delete());
+					}
 					
 				}
 				
 			}
 			
 		} catch (final IOException ex) {
-			LoggerManager.tracedLog(this, Level.SEVERE, "An IOException occurred during the test.", ex); //$NON-NLS-1$
+			LoggerManager.tracedLog(this, Level.SEVERE, "An IOException occurred during the test.", ex);
 		} catch (final InterruptedException ex) {
-			LoggerManager.tracedLog(this, Level.WARNING, "The test was interrupted.", ex); //$NON-NLS-1$
+			LoggerManager.tracedLog(this, Level.WARNING, "The test was interrupted.", ex);
 		} finally {
 			
 			try {
@@ -633,7 +665,7 @@ public class PeerTester extends CloseableThread {
 				this.close();
 				
 			} catch (final IOException ex) {
-				LoggerManager.tracedLog(this, Level.WARNING, "The tracker could not be terminated properly.", ex); //$NON-NLS-1$
+				LoggerManager.tracedLog(this, Level.WARNING, "The tracker could not be terminated properly.", ex);
 			}
 			
 		}
