@@ -546,6 +546,10 @@ public class Peer extends CloseableThread {
 	 */
 	public int numberOfActiveServers() {
 
+		if (!this.isWaitingConnections()) {
+			return 0;
+		}
+		
 		return this.current_server_manager.numberOfActiveServers();
 	}
 
