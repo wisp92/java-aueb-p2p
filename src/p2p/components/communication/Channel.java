@@ -49,10 +49,13 @@ public abstract class Channel extends CloseableThread {
 	 *            The socket address to be checked.
 	 * @return The response time of the socket address.
 	 */
-	public static final long getResponseTime(final InetSocketAddress socket_address) {
+	public static final long getResponseTime(
+			final InetSocketAddress socket_address) {
 
-		return Channel.getResponseTime(socket_address,
-				Configuration.getDefault().getInteger("check_alive_threshold", Channel.default_check_alive_threshold));
+		return Channel.getResponseTime(
+				socket_address,
+				Configuration.getDefault().getInteger("check_alive_threshold",
+						Channel.default_check_alive_threshold));
 	}
 
 	/**
@@ -65,13 +68,17 @@ public abstract class Channel extends CloseableThread {
 	 *            failing.
 	 * @return The response time of the socket address.
 	 */
-	public static final long getResponseTime(final InetSocketAddress socket_address, final long check_alive_threshold) {
+	public static final long getResponseTime(
+			final InetSocketAddress socket_address,
+			final long check_alive_threshold) {
 
 		final Thread current_thread = Thread.currentThread();
-		final ThreadGroup group = new ThreadGroup(String.format("%s.CheckAliveClients", current_thread.getName()));
+		final ThreadGroup group = new ThreadGroup(String.format(
+				"%s.CheckAliveClients", current_thread.getName()));
 
-		return Channel.getResponseTime(group, String.format("%s.CheckAlive", current_thread.getName()), socket_address,
-				check_alive_threshold);
+		return Channel.getResponseTime(group,
+				String.format("%s.CheckAlive", current_thread.getName()),
+				socket_address, check_alive_threshold);
 	}
 
 	/**
@@ -86,8 +93,10 @@ public abstract class Channel extends CloseableThread {
 	public static final List<Pair<InetSocketAddress, Long>> getResponseTime(
 			final Set<InetSocketAddress> socket_address_batch) {
 
-		return Channel.getResponseTime(socket_address_batch,
-				Configuration.getDefault().getInteger("check_alive_threshold", Channel.default_check_alive_threshold));
+		return Channel.getResponseTime(
+				socket_address_batch,
+				Configuration.getDefault().getInteger("check_alive_threshold",
+						Channel.default_check_alive_threshold));
 	}
 
 	/**
@@ -103,15 +112,18 @@ public abstract class Channel extends CloseableThread {
 	 *         corresponding response times.
 	 */
 	public static final List<Pair<InetSocketAddress, Long>> getResponseTime(
-			final Set<InetSocketAddress> socket_address_batch, final long check_alive_threshold) {
+			final Set<InetSocketAddress> socket_address_batch,
+			final long check_alive_threshold) {
 
 		final Thread current_thread = Thread.currentThread();
-		final ThreadGroup group = new ThreadGroup(String.format("%s.CheckAliveClients", current_thread.getName()));
+		final ThreadGroup group = new ThreadGroup(String.format(
+				"%s.CheckAliveClients", current_thread.getName()));
 
 		/*
 		 * Create an integer iterator to enumerate the socket addresses.
 		 */
-		final PrimitiveIterator.OfInt it = IntStream.range(0, socket_address_batch.size()).iterator();
+		final PrimitiveIterator.OfInt it = IntStream.range(0,
+				socket_address_batch.size()).iterator();
 
 		try {
 
@@ -121,18 +133,26 @@ public abstract class Channel extends CloseableThread {
 			 * return the results in ascending order.
 			 */
 
-			return socket_address_batch.stream().collect(Collectors.toMap(x -> x, x -> it.next())).entrySet()
+			return socket_address_batch
+					.stream()
+					.collect(Collectors.toMap(x -> x, x -> it.next()))
+					.entrySet()
 					.parallelStream()
 					.collect(
-							Collectors
-									.toMap(x -> x.getKey(),
-											x -> new Long(Channel.getResponseTime(group,
-													String.format("%s.CheckAlive-%d", current_thread.getName(),
-															x.getValue()),
-													x.getKey(), check_alive_threshold))))
-					.entrySet().parallelStream().filter(x -> x.getValue().longValue() <= check_alive_threshold)
+							Collectors.toMap(
+									x -> x.getKey(),
+									x -> new Long(Channel.getResponseTime(
+											group, String.format(
+													"%s.CheckAlive-%d",
+													current_thread.getName(),
+													x.getValue()), x.getKey(),
+											check_alive_threshold))))
+					.entrySet()
+					.parallelStream()
+					.filter(x -> x.getValue().longValue() <= check_alive_threshold)
 					.sorted((x, y) -> x.getValue().compareTo(y.getValue()))
-					.map(x -> new Pair<>(x.getKey(), x.getValue())).collect(Collectors.toList());
+					.map(x -> new Pair<>(x.getKey(), x.getValue()))
+					.collect(Collectors.toList());
 
 		} finally {
 
@@ -145,10 +165,12 @@ public abstract class Channel extends CloseableThread {
 
 	}
 
-	private static final long getResponseTime(final ThreadGroup group, final String name,
-			final InetSocketAddress socket_address, final long check_alive_threshold) {
+	private static final long getResponseTime(final ThreadGroup group,
+			final String name, final InetSocketAddress socket_address,
+			final long check_alive_threshold) {
 
-		try (CheckAliveClient client_channel = new CheckAliveClient(group, name, socket_address)) { // $NON-NLS-1$
+		try (CheckAliveClient client_channel = new CheckAliveClient(group,
+				name, socket_address)) { // $NON-NLS-1$
 
 			/*
 			 * Calculate the response time of the request.
@@ -161,16 +183,21 @@ public abstract class Channel extends CloseableThread {
 
 			if (client_channel.getStatus() == ClientChannel.Status.SUCCESSFULL) {
 
-				LoggerManager.tracedLog(Level.FINE, String.format("The server <%s> responded in %d milliseconds.",
+				LoggerManager.tracedLog(Level.FINE, String.format(
+						"The server <%s> responded in %d milliseconds.",
 						socket_address.toString(), new Long(response_time)));
 
 				return response_time;
 
 			} else {
 
-				LoggerManager.tracedLog(Level.FINE,
-						String.format("The server <%s> failed to respond in %d milliseconds.",
-								socket_address.toString(), new Long(check_alive_threshold)));
+				LoggerManager
+						.tracedLog(
+								Level.FINE,
+								String.format(
+										"The server <%s> failed to respond in %d milliseconds.",
+										socket_address.toString(), new Long(
+												check_alive_threshold)));
 
 				/*
 				 * In a time the response time at the best case just greater
@@ -182,12 +209,16 @@ public abstract class Channel extends CloseableThread {
 
 		} catch (@SuppressWarnings("unused") final IOException ex) {
 
-			LoggerManager.tracedLog(Level.FINE, String.format("The server <%s> is probably down.",
-					socket_address.toString(), new Long(check_alive_threshold)));
+			LoggerManager
+					.tracedLog(Level.FINE, String.format(
+							"The server <%s> is probably down.", socket_address
+									.toString(),
+							new Long(check_alive_threshold)));
 
 		} catch (@SuppressWarnings("unused") final InterruptedException ex) {
 
-			LoggerManager.tracedLog(Level.WARNING, "The check alive request was interrupted.");
+			LoggerManager.tracedLog(Level.WARNING,
+					"The check alive request was interrupted.");
 
 		}
 
@@ -219,17 +250,29 @@ public abstract class Channel extends CloseableThread {
 	 *             If an error occurs during the allocation of the local
 	 *             {@link Socket} object.
 	 */
-	public Channel(final ThreadGroup group, final String name, final InetSocketAddress socket_address)
-			throws IOException {
+	public Channel(final ThreadGroup group, final String name,
+			final InetSocketAddress socket_address) throws IOException {
 		super(group, name);
 
 		InetAddress socket_host_address = socket_address.getAddress();
-		if (socket_host_address.isReachable(Channel.default_reachable_timeout)) {
-			this.socket = new Socket(socket_address.getAddress(), socket_address.getPort());
+
+		/*
+		 * Check if the remote host is reachable through ping.
+		 */
+		if (socket_host_address.isReachable(Configuration.getDefault()
+				.getInteger("reachable_timeout",
+						Channel.default_reachable_timeout))) {
+			this.socket = new Socket(socket_host_address,
+					socket_address.getPort());
+
 		} else {
 
-			LoggerManager.tracedLog(Level.WARNING,
-					"The target host is unreachable pleases check your Internet connection.");
+			LoggerManager
+					.tracedLog(
+							Level.WARNING,
+							String.format(
+									"The target host <%s> is unreachable pleases check your Internet connection.",
+									socket_host_address.toString()));
 			this.socket = new Socket();
 
 		}
@@ -248,7 +291,8 @@ public abstract class Channel extends CloseableThread {
 	 * @param socket
 	 *            The local {@link Socket} object associated with this channel.
 	 */
-	public Channel(final ThreadGroup group, final String name, final Socket socket) {
+	public Channel(final ThreadGroup group, final String name,
+			final Socket socket) {
 		super(group, name);
 
 		this.socket = socket;
@@ -265,13 +309,18 @@ public abstract class Channel extends CloseableThread {
 	 */
 	public void clean(final int max_inactivity_time) {
 
-		if (this.isAlive() && !this.isInterrupted()
+		if (this.isAlive()
+				&& !this.isInterrupted()
 				&& ((System.currentTimeMillis() - this.last_active_time) > max_inactivity_time)) {
 
 			this.interrupt();
 
-			LoggerManager.tracedLog(Level.WARNING,
-					String.format("The channel <%s> was stopped by a cleaner due to inactivity.", this.getName()));
+			LoggerManager
+					.tracedLog(
+							Level.WARNING,
+							String.format(
+									"The channel <%s> was stopped by a cleaner due to inactivity.",
+									this.getName()));
 		}
 
 	}
@@ -318,10 +367,16 @@ public abstract class Channel extends CloseableThread {
 
 			if (!this.socket.isClosed()) {
 
-				LoggerManager.tracedLog(this, Level.FINE,
-						String.format("A new communication started (%d active in group <%s>).",
-								new Integer(CloseableThread.countActive(this.getThreadGroup())),
-								this.getThreadGroup().getName()));
+				LoggerManager
+						.tracedLog(
+								this,
+								Level.FINE,
+								String.format(
+										"A new communication started (%d active in group <%s>).",
+										new Integer(CloseableThread
+												.countActive(this
+														.getThreadGroup())),
+										this.getThreadGroup().getName()));
 
 				this.communicate();
 
@@ -334,11 +389,13 @@ public abstract class Channel extends CloseableThread {
 			 * interrupted.
 			 */
 
-			LoggerManager.tracedLog(this, Level.WARNING, "The communication was interrupted.");
+			LoggerManager.tracedLog(this, Level.WARNING,
+					"The communication was interrupted.");
 
 		} catch (final IOException ex) {
 
-			LoggerManager.tracedLog(this, Level.SEVERE, "An IOException occurred during the communication.", ex);
+			LoggerManager.tracedLog(this, Level.SEVERE,
+					"An IOException occurred during the communication.", ex);
 
 		} finally {
 
@@ -346,14 +403,21 @@ public abstract class Channel extends CloseableThread {
 
 				this.close();
 
-				LoggerManager.tracedLog(this, Level.FINE,
-						String.format("The communication ended (approximately %d remaining in group <%s>).",
-								new Integer(CloseableThread.countActive(this.getThreadGroup())),
-								this.getThreadGroup().getName()));
+				LoggerManager
+						.tracedLog(
+								this,
+								Level.FINE,
+								String.format(
+										"The communication ended (approximately %d remaining in group <%s>).",
+										new Integer(CloseableThread
+												.countActive(this
+														.getThreadGroup())),
+										this.getThreadGroup().getName()));
 
 			} catch (final IOException ex) {
 
-				LoggerManager.tracedLog(this, Level.WARNING, "The channel could not be closed properly.", ex);
+				LoggerManager.tracedLog(this, Level.WARNING,
+						"The channel could not be closed properly.", ex);
 
 			}
 
@@ -370,7 +434,8 @@ public abstract class Channel extends CloseableThread {
 	 * @throws InterruptedException
 	 *             If the execution of the thread is interrupted.
 	 */
-	protected abstract void communicate() throws IOException, InterruptedException;
+	protected abstract void communicate() throws IOException,
+			InterruptedException;
 
 	/**
 	 * @return An {@link ObjectInputStream} object based on the local socket's
@@ -389,7 +454,8 @@ public abstract class Channel extends CloseableThread {
 			 * lang.Object)
 			 */
 			@Override
-			protected final Object readObjectOverride() throws IOException, ClassNotFoundException {
+			protected final Object readObjectOverride() throws IOException,
+					ClassNotFoundException {
 
 				final Object object = super.readObjectOverride();
 				Channel.this.heartbit();
@@ -420,7 +486,8 @@ public abstract class Channel extends CloseableThread {
 			 * lang.Object)
 			 */
 			@Override
-			protected void writeObjectOverride(final Object obj) throws IOException {
+			protected void writeObjectOverride(final Object obj)
+					throws IOException {
 
 				super.writeObjectOverride(obj);
 				Channel.this.heartbit();

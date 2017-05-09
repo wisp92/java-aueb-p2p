@@ -188,6 +188,6 @@ public class TestHelper {
 		        Paths.get(
 		                Configuration.getDefault().getString("sample_list_path", TestHelper.default_sample_list_path)),
 		        shared_directory_path, min_sample_size);
-	}
+	}	
 
 }

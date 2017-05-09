@@ -2,6 +2,7 @@ package p2p.utilities.testing;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 
 import p2p.components.Configuration;
 import p2p.components.common.Credentials;
+import p2p.components.communication.Channel;
 import p2p.components.communication.CloseableThread;
 import p2p.components.peers.Peer;
 import p2p.components.trackers.Tracker;
@@ -76,7 +78,8 @@ public class PeerTester extends CloseableThread {
 		 *             If no Command object can be associated with the given
 		 *             text.
 		 */
-		public static Behavior find(final String text) throws NoSuchElementException {
+		public static Behavior find(final String text)
+				throws NoSuchElementException {
 
 			return Instructable.find(Behavior.class, text);
 		}
@@ -106,6 +109,7 @@ public class PeerTester extends CloseableThread {
 
 		/*
 		 * (non-Javadoc)
+		 * 
 		 * @see p2p.common.Instructable#getText()
 		 */
 		@Override
@@ -125,15 +129,15 @@ public class PeerTester extends CloseableThread {
 	 */
 	public class TestablePeer extends Peer {
 
-		private Credentials	user_credentials;
-		private List<File>	available_files;
-		private ValueRange	peer_waiting_interval;
-		private Behavior	behavior;
+		private Credentials user_credentials;
+		private List<File> available_files;
+		private ValueRange peer_waiting_interval;
+		private Behavior behavior;
 
-		private int	 no_successful_logins		 = 0;
-		private int	 no_successful_registrations = 0;
-		private int	 no_successful_logouts		 = 0;
-		private long no_requested_downloads		 = 0;
+		private int no_successful_logins = 0;
+		private int no_successful_registrations = 0;
+		private int no_successful_logouts = 0;
+		private long no_requested_downloads = 0;
 
 		/**
 		 * Allocates a new TestablePeer object.
@@ -153,7 +157,8 @@ public class PeerTester extends CloseableThread {
 		 */
 		public List<File> getAvailableFiles() {
 
-			return this.available_files == null ? Collections.emptyList() : this.available_files;
+			return this.available_files == null ? Collections.emptyList()
+					: this.available_files;
 
 		}
 
@@ -210,17 +215,20 @@ public class PeerTester extends CloseableThread {
 
 		/*
 		 * (non-Javadoc)
+		 * 
 		 * @see java.lang.Thread#run()
 		 */
 		@Override
 		public void run() {
 
 			if (!this.isUserCredentialsSet()) {
-				LoggerManager.tracedLog(this, Level.WARNING, "The user's credentials have not been set.");
+				LoggerManager.tracedLog(this, Level.WARNING,
+						"The user's credentials have not been set.");
 			}
 
 			if (!this.isSharedDirecorySet()) {
-				LoggerManager.tracedLog(this, Level.WARNING, "The user's shared directory has not been set.");
+				LoggerManager.tracedLog(this, Level.WARNING,
+						"The user's shared directory has not been set.");
 			}
 
 			/*
@@ -234,8 +242,7 @@ public class PeerTester extends CloseableThread {
 						this.no_successful_logins++;
 					}
 				}
-			}
-			else {
+			} else {
 				this.no_successful_logins++;
 			}
 
@@ -243,10 +250,12 @@ public class PeerTester extends CloseableThread {
 			 * Select a list of available files to download.
 			 */
 			List<String> filenames_to_download = Collections.emptyList();
-			final List<String> shared_filenames = this.getSharedFiles().parallelStream().map(x -> x.getName())
-			        .distinct().collect(Collectors.toList());
-			final List<String> available_filenames = this.getAvailableFiles().parallelStream().map(x -> x.getName())
-			        .distinct().collect(Collectors.toList());
+			final List<String> shared_filenames = this.getSharedFiles()
+					.parallelStream().map(x -> x.getName()).distinct()
+					.collect(Collectors.toList());
+			final List<String> available_filenames = this.getAvailableFiles()
+					.parallelStream().map(x -> x.getName()).distinct()
+					.collect(Collectors.toList());
 
 			/*
 			 * Keep only files that the peer doesn't have to the list.
@@ -259,8 +268,10 @@ public class PeerTester extends CloseableThread {
 			if (available_filenames.size() > 0) {
 
 				Collections.shuffle(available_filenames);
-				filenames_to_download = available_filenames.stream()
-				        .limit((new Random()).nextInt(available_filenames.size())).collect(Collectors.toList());
+				filenames_to_download = available_filenames
+						.stream()
+						.limit((new Random()).nextInt(available_filenames
+								.size())).collect(Collectors.toList());
 
 			}
 
@@ -268,15 +279,17 @@ public class PeerTester extends CloseableThread {
 			 * Select a random waiting time.
 			 */
 			final long peer_waiting_time = (new Random())
-			        .nextInt((int) (this.peer_waiting_interval.getMaximum() - this.peer_waiting_interval.getMinimum()))
-			        + this.peer_waiting_interval.getMinimum();
+					.nextInt((int) (this.peer_waiting_interval.getMaximum() - this.peer_waiting_interval
+							.getMinimum()))
+					+ this.peer_waiting_interval.getMinimum();
 
 			/*
 			 * Develop a peers behavior at random.
 			 */
 
-			LoggerManager.tracedLog(Level.INFO,
-			        String.format("The peer adapted the %s behavior", this.behavior.toString()));
+			LoggerManager.tracedLog(Level.INFO, String.format(
+					"The peer adapted the %s behavior",
+					this.behavior.toString()));
 
 			try {
 
@@ -288,7 +301,8 @@ public class PeerTester extends CloseableThread {
 				}
 
 			} catch (final InterruptedException ex) {
-				LoggerManager.tracedLog(this, Level.WARNING, "The peer's test was interrupted.", ex);
+				LoggerManager.tracedLog(this, Level.WARNING,
+						"The peer's test was interrupted.", ex);
 			}
 
 			/*
@@ -305,7 +319,8 @@ public class PeerTester extends CloseableThread {
 
 			while (true) {
 				if ((CloseableThread.countActive(this.clients_group) == 0)
-				        && ((this.behavior == Behavior.FAST) || (this.numberOfActiveServers() == 0))) {
+						&& ((this.behavior == Behavior.FAST) || (this
+								.numberOfActiveServers() == 0))) {
 					break;
 				}
 			}
@@ -325,7 +340,8 @@ public class PeerTester extends CloseableThread {
 				}
 
 			} catch (final InterruptedException ex) {
-				LoggerManager.tracedLog(this, Level.WARNING, "The peer's test was interrupted.", ex);
+				LoggerManager.tracedLog(this, Level.WARNING,
+						"The peer's test was interrupted.", ex);
 			}
 
 			if (this.logout()) {
@@ -337,7 +353,8 @@ public class PeerTester extends CloseableThread {
 				this.close();
 
 			} catch (final IOException ex) {
-				LoggerManager.tracedLog(this, Level.WARNING, "The peer could not be terminated properly.", ex);
+				LoggerManager.tracedLog(this, Level.WARNING,
+						"The peer could not be terminated properly.", ex);
 			}
 
 		}
@@ -351,7 +368,8 @@ public class PeerTester extends CloseableThread {
 		 */
 		public boolean setAvailableFiles(final List<File> available_files) {
 
-			if (this.isAlive()) return false;
+			if (this.isAlive())
+				return false;
 
 			this.available_files = available_files;
 
@@ -367,7 +385,8 @@ public class PeerTester extends CloseableThread {
 		 */
 		public boolean setBehavior(final String text) {
 
-			if (this.isAlive()) return false;
+			if (this.isAlive())
+				return false;
 
 			try {
 
@@ -390,9 +409,11 @@ public class PeerTester extends CloseableThread {
 		 *            The available range of intervals.
 		 * @return True If the update was successful.
 		 */
-		public boolean setPeerWaitingInterval(final ValueRange peer_waiting_interval) {
+		public boolean setPeerWaitingInterval(
+				final ValueRange peer_waiting_interval) {
 
-			if (this.isAlive()) return false;
+			if (this.isAlive())
+				return false;
 
 			this.peer_waiting_interval = peer_waiting_interval;
 
@@ -409,7 +430,8 @@ public class PeerTester extends CloseableThread {
 		 */
 		public boolean setUserCredentials(final Credentials user_credentials) {
 
-			if (this.isAlive()) return false;
+			if (this.isAlive())
+				return false;
 
 			this.user_credentials = user_credentials;
 
@@ -419,6 +441,12 @@ public class PeerTester extends CloseableThread {
 	}
 
 	/**
+	 * Indicates if the 0.0.0.0 interface of the tracker is going to be resolved
+	 * to a local address instead.
+	 */
+	public static final boolean default_resolve_tracker_address = true;
+
+	/**
 	 * Starts the execution of the tracker.
 	 *
 	 * @param args
@@ -426,7 +454,8 @@ public class PeerTester extends CloseableThread {
 	 */
 	public static void main(final String[] args) {
 
-		Configuration.setAsDefault(new Configuration("configuration.properties"));
+		Configuration
+				.setAsDefault(new Configuration("configuration.properties"));
 
 		/*
 		 * Create a new ThreadGroup to add tests and execute them.
@@ -440,38 +469,46 @@ public class PeerTester extends CloseableThread {
 			tester.join();
 
 		} catch (final IOException ex) {
-			LoggerManager.tracedLog(Level.SEVERE, "An IOException occurred during the test.", ex);
+			LoggerManager.tracedLog(Level.SEVERE,
+					"An IOException occurred during the test.", ex);
 		} catch (final InterruptedException ex) {
-			LoggerManager.tracedLog(Level.WARNING, "The test was interrupted.", ex);
+			LoggerManager.tracedLog(Level.WARNING, "The test was interrupted.",
+					ex);
 		}
 
 	}
 
-	private final ThreadGroup trackers_group = CloseableThread.newThreadGroup(this, "Trackers");
-	private final ThreadGroup peers_group	 = CloseableThread.newThreadGroup(this, "Peers");
+	private final ThreadGroup trackers_group = CloseableThread.newThreadGroup(
+			this, "Trackers");
+	private final ThreadGroup peers_group = CloseableThread.newThreadGroup(
+			this, "Peers");
 
 	/**
 	 * The default configuration file of the tester.
 	 */
-	private final Configuration	configuration;
+	private final Configuration configuration;
+
 	/**
 	 * The default no of peers to run in parallel.
 	 */
-	private final int			no_peers;
+	private final int no_peers;
+
 	/**
 	 * The default number milliseconds to sleep when requested.
 	 */
-	private final int			sleep_time;
+	private final int sleep_time;
+
 	/**
 	 * The delay in milliseconds between time delicate Processes. If it set to 0
 	 * then no delay between any process is going to be added.
 	 */
-	private final int			tempo;
+	private final int tempo;
+
 	/**
 	 * Indicates the minimum number of sample files that are going to be copied
 	 * to the peer's shared directory before the execution.
 	 */
-	private final int			min_sample_files;
+	private final int min_sample_files;
 
 	/**
 	 * Indicates the range of time interval a peer is going to wait for incoming
@@ -501,10 +538,17 @@ public class PeerTester extends CloseableThread {
 	 * the test.
 	 */
 	private final boolean delete_shared_files;
+
 	/**
 	 * The path to shared files list.
 	 */
-	private final Path	  sample_list_path;
+	private final Path sample_list_path;
+
+	/**
+	 * Indicate if the interface 0.0.0.0 of the tracker is going to be resolved
+	 * to a local address.
+	 */
+	private final boolean resolve_tracker_address;
 
 	private final String database_path;
 
@@ -519,38 +563,48 @@ public class PeerTester extends CloseableThread {
 	public PeerTester(final ThreadGroup group, final String name) {
 		super(group, name);
 
-		this.configuration = new Configuration(Configuration.getDefault().getString("test_configuration"));
+		this.configuration = new Configuration(Configuration.getDefault()
+				.getString("test_configuration"));
 
-		this.sample_list_path = Paths
-		        .get(Configuration.getDefault().getString("sample_list_path", TestHelper.default_sample_list_path));
+		this.sample_list_path = Paths.get(Configuration.getDefault().getString(
+				"sample_list_path", TestHelper.default_sample_list_path));
 		this.no_peers = this.configuration.getInteger("no_peers", 1);
 		this.tempo = this.configuration.getInteger("tempo", 1);
 		this.sleep_time = this.configuration.getInteger("sleep_time", 1000);
-		this.min_sample_files = this.configuration.getInteger("min_sample_files", 2);
-		this.peer_waiting_interval = ValueRange.of(this.configuration.getInteger("min_peer_waiting_time", 3000),
-		        this.configuration.getInteger("max_peer_waiting_time", 6000));
-		this.databases_directory = this.configuration.getString("database_directory", "databases");
-		this.shared_directory = this.configuration.getString("shared_directory_path", "shared/peers");
-		this.behavior_mode = this.configuration.getString("behavior_mode", "all");
-		this.delete_shared_files = this.configuration.getBoolean("delete_shared_files", false);
-
+		this.min_sample_files = this.configuration.getInteger(
+				"min_sample_files", 2);
+		this.peer_waiting_interval = ValueRange.of(
+				this.configuration.getInteger("min_peer_waiting_time", 3000),
+				this.configuration.getInteger("max_peer_waiting_time", 6000));
+		this.databases_directory = this.configuration.getString(
+				"database_directory", "databases");
+		this.shared_directory = this.configuration.getString(
+				"shared_directory_path", "shared/peers");
+		this.behavior_mode = this.configuration.getString("behavior_mode",
+				"all");
+		this.delete_shared_files = this.configuration.getBoolean(
+				"delete_shared_files", false);
+		this.resolve_tracker_address = this.configuration.getBoolean("resolve_tracker_address", true);
+		
 		final File database_directory_file = new File(this.databases_directory);
 		if (database_directory_file.exists()) {
 			if (!database_directory_file.isDirectory()) {
-				LoggerManager.tracedLog(Level.SEVERE,
-				        String.format("The database directory <%s> corresponds to a file.", this.databases_directory));
+				LoggerManager.tracedLog(Level.SEVERE, String.format(
+						"The database directory <%s> corresponds to a file.",
+						this.databases_directory));
 			}
-		}
-		else {
+		} else {
 			database_directory_file.mkdirs();
 		}
 
-		this.database_path = (new File(database_directory_file, "default_tracker.sqlite")).getAbsolutePath();
+		this.database_path = (new File(database_directory_file,
+				"default_tracker.sqlite")).getAbsolutePath();
 
 	}
 
 	/*
 	 * (non-Javadoc)
+	 * 
 	 * @see java.io.Closeable#close()
 	 */
 	@Override
@@ -563,137 +617,250 @@ public class PeerTester extends CloseableThread {
 
 	/*
 	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Thread#run()
 	 */
 	@Override
 	public void run() {
 
-		try (Tracker tracker = new Tracker(this.trackers_group, String.format("%s.Tracker", this.getName()))) {
+		try (Tracker tracker = new Tracker(this.trackers_group, String.format(
+				"%s.Tracker", this.getName()))) {
 
 			if (tracker.startManager(0, this.database_path)) {
 
-				final InetSocketAddress tracker_socket_address = tracker.getServerAddress();
-				if (tracker_socket_address != null) {
+				InetSocketAddress tracker_socket_address = tracker
+						.getServerAddress();
 
-					final ArrayDeque<TestablePeer> peers = new ArrayDeque<>();
-
-					for (int i = 0; i < this.no_peers; i++) {
-
-						final Credentials user_credentials = new Credentials(String.format("user-%d", new Integer(i)),
-						        null);
-
-						/*
-						 * The close() method of the PeerTester makes sure to
-						 * prevent any memory leaks from the Peer objects.
-						 */
-						@SuppressWarnings("resource")
-						final TestablePeer peer = new TestablePeer(this.peers_group,
-						        String.format("%s.Peer-%d", this.getName(), new Integer(i)));
-
-						/*
-						 * The tracker's description, user credentials and the
-						 * shared directory's structure are determined before
-						 * the actual test.
-						 */
-						if (peer.setTracker(tracker_socket_address)
-						        && TestHelper.newSharedDirectory(peer, this.sample_list_path,
-						                String.format("%s/%s_shared", this.shared_directory, peer.getName()),
-						                this.min_sample_files)
-						        && peer.setUserCredentials(user_credentials)
-						        && peer.setAvailableFiles(TestHelper.getDefaultSharedFiles(this.sample_list_path))
-						        && peer.setBehavior(this.behavior_mode)
-						        && peer.setPeerWaitingInterval(this.peer_waiting_interval)) {
-
-							peer.start();
-							peers.add(peer);
-
-						}
-						else {
-							peer.close();
-						}
-
-						if (this.tempo > 0) {
-							Thread.sleep(this.tempo);
-						}
-
-					}
-
-					while (CloseableThread.countActive(this.peers_group) > 0) {
-
-						LoggerManager.tracedLog(this, Level.INFO,
-						        String.format("%d from %d active peers",
-						                new Integer(CloseableThread.countActive(this.peers_group)),
-						                new Integer(this.no_peers)));
-
-						Thread.sleep(this.sleep_time);
-					}
-
-					final Set<File> finished_shared_files = peers.parallelStream().filter(x -> x.isSharedDirecorySet())
-					        .flatMap(x -> Arrays.asList(new File(x.getSharedDirectory()).listFiles()).parallelStream())
-					        .distinct().collect(Collectors.toSet());
-					final Long count_successful_peer_logins = new Long(
-					        peers.parallelStream().filter(x -> x.getSuccessfulLogins() > 0).count());
-					final Long count_successful_peer_registrations = new Long(
-					        peers.parallelStream().filter(x -> x.getSuccessfulRegistrations() > 0).count());
-					final Long count_successful_peer_logouts = new Long(
-					        peers.parallelStream().filter(x -> x.getSuccessfulLogouts() > 0).count());
-					final Long count_requested_downloads = peers.parallelStream()
-					        .map(x -> new Long(x.getRequestedDownloads()))
-					        .reduce(new Long(0), (x, y) -> new Long(x.longValue() + y.longValue()));
-					final Long count_successful_downloads = peers.parallelStream()
-					        .map(x -> new Long(x.getCompletedDownloads()))
-					        .reduce(new Long(0), (x, y) -> new Long(x.longValue() + y.longValue()));
-					final Long count_acknowledged_downloads = peers.parallelStream()
-					        .map(x -> new Long(x.getAcknowledgedDownloads()))
-					        .reduce(new Long(0), (x, y) -> new Long(x.longValue() + y.longValue()));
-					final Set<File> downloaded_files = peers.parallelStream()
-					        .flatMap(x -> x.getDownloadedFiles().stream()).collect(Collectors.toSet());
-
-					LoggerManager.tracedLog(this, Level.INFO, String.format(
-					        "%d peer(s) were able to register successfully.", count_successful_peer_registrations));
-					LoggerManager.tracedLog(this, Level.INFO,
-					        String.format("%d peer(s) were able to login successfully.", count_successful_peer_logins));
-					LoggerManager.tracedLog(this, Level.INFO, String
-					        .format("%d peer(s) were able to logout successfully.", count_successful_peer_logouts));
-
-					final Set<File> initial_shared_files = finished_shared_files.stream().collect(Collectors.toSet());
-					initial_shared_files.removeAll(downloaded_files);
-					LoggerManager.tracedLog(this, Level.INFO,
-					        String.format("The initial sample of shared files contained %d files.",
-					                new Integer(initial_shared_files.size())));
-
-					LoggerManager.tracedLog(this, Level.INFO, String.format(
-					        "%d from %d downloads completed successfully (Validity Check: %b).",
-					        count_successful_downloads, count_requested_downloads,
-					        new Boolean(count_successful_downloads
-					                .longValue() == (finished_shared_files.size() - initial_shared_files.size()))));
-
-					LoggerManager.tracedLog(this, Level.INFO,
-					        String.format("%d from %d successful downloads were acknowledged by the tracker.",
-					                count_acknowledged_downloads, count_successful_downloads));
-
-					LoggerManager.tracedLog(this, Level.INFO,
-					        String.format("The following files was the initial sample: %s", initial_shared_files
-					                .stream().map(x -> x.getAbsolutePath()).collect(Collectors.toList()).toString()));
-					LoggerManager.tracedLog(this, Level.INFO,
-					        String.format("The following files have been downloaded: %s", downloaded_files.stream()
-					                .map(x -> x.getAbsolutePath()).collect(Collectors.toList()).toString()));
-
-					/*
-					 * Delete all shared files.
-					 */
-					if (this.delete_shared_files) {
-						finished_shared_files.parallelStream().forEach(x -> x.delete());
-					}
-
+				/*
+				 * Try to resolve local tracker address if specified by the
+				 * configuration. Might help to test reachability if the ping
+				 * command can't access 0.0.0.0 interface.
+				 */
+				if (this.resolve_tracker_address && tracker_socket_address.getHostString().equals("0.0.0.0")) {
+					tracker_socket_address = new InetSocketAddress(InetAddress.getLocalHost(), tracker_socket_address.getPort());
 				}
+
+				if (PeerTester.default_resolve_tracker_address)
+
+					if (tracker_socket_address != null) {
+
+						final ArrayDeque<TestablePeer> peers = new ArrayDeque<>();
+
+						for (int i = 0; i < this.no_peers; i++) {
+
+							final Credentials user_credentials = new Credentials(
+									String.format("user-%d", new Integer(i)),
+									null);
+
+							/*
+							 * The close() method of the PeerTester makes sure
+							 * to prevent any memory leaks from the Peer
+							 * objects.
+							 */
+							@SuppressWarnings("resource")
+							final TestablePeer peer = new TestablePeer(
+									this.peers_group, String.format(
+											"%s.Peer-%d", this.getName(),
+											new Integer(i)));
+
+							/*
+							 * The tracker's description, user credentials and
+							 * the shared directory's structure are determined
+							 * before the actual test.
+							 */
+							if (peer.setTracker(tracker_socket_address)
+									&& TestHelper.newSharedDirectory(peer,
+											this.sample_list_path,
+											String.format("%s/%s_shared",
+													this.shared_directory,
+													peer.getName()),
+											this.min_sample_files)
+									&& peer.setUserCredentials(user_credentials)
+									&& peer.setAvailableFiles(TestHelper
+											.getDefaultSharedFiles(this.sample_list_path))
+									&& peer.setBehavior(this.behavior_mode)
+									&& peer.setPeerWaitingInterval(this.peer_waiting_interval)) {
+
+								peer.start();
+								peers.add(peer);
+
+							} else {
+								peer.close();
+							}
+
+							if (this.tempo > 0) {
+								Thread.sleep(this.tempo);
+							}
+
+						}
+
+						while (CloseableThread.countActive(this.peers_group) > 0) {
+
+							LoggerManager
+									.tracedLog(
+											this,
+											Level.INFO,
+											String.format(
+													"%d from %d active peers",
+													new Integer(
+															CloseableThread
+																	.countActive(this.peers_group)),
+													new Integer(this.no_peers)));
+
+							Thread.sleep(this.sleep_time);
+						}
+
+						final Set<File> finished_shared_files = peers
+								.parallelStream()
+								.filter(x -> x.isSharedDirecorySet())
+								.flatMap(
+										x -> Arrays
+												.asList(new File(x
+														.getSharedDirectory())
+														.listFiles())
+												.parallelStream()).distinct()
+								.collect(Collectors.toSet());
+						final Long count_successful_peer_logins = new Long(
+								peers.parallelStream()
+										.filter(x -> x.getSuccessfulLogins() > 0)
+										.count());
+						final Long count_successful_peer_registrations = new Long(
+								peers.parallelStream()
+										.filter(x -> x
+												.getSuccessfulRegistrations() > 0)
+										.count());
+						final Long count_successful_peer_logouts = new Long(
+								peers.parallelStream()
+										.filter(x -> x.getSuccessfulLogouts() > 0)
+										.count());
+						final Long count_requested_downloads = peers
+								.parallelStream()
+								.map(x -> new Long(x.getRequestedDownloads()))
+								.reduce(new Long(0),
+										(x, y) -> new Long(x.longValue()
+												+ y.longValue()));
+						final Long count_successful_downloads = peers
+								.parallelStream()
+								.map(x -> new Long(x.getCompletedDownloads()))
+								.reduce(new Long(0),
+										(x, y) -> new Long(x.longValue()
+												+ y.longValue()));
+						final Long count_acknowledged_downloads = peers
+								.parallelStream()
+								.map(x -> new Long(x.getAcknowledgedDownloads()))
+								.reduce(new Long(0),
+										(x, y) -> new Long(x.longValue()
+												+ y.longValue()));
+						final Set<File> downloaded_files = peers
+								.parallelStream()
+								.flatMap(x -> x.getDownloadedFiles().stream())
+								.collect(Collectors.toSet());
+
+						LoggerManager
+								.tracedLog(
+										this,
+										Level.INFO,
+										String.format(
+												"%d peer(s) were able to register successfully.",
+												count_successful_peer_registrations));
+						LoggerManager
+								.tracedLog(
+										this,
+										Level.INFO,
+										String.format(
+												"%d peer(s) were able to login successfully.",
+												count_successful_peer_logins));
+						LoggerManager
+								.tracedLog(
+										this,
+										Level.INFO,
+										String.format(
+												"%d peer(s) were able to logout successfully.",
+												count_successful_peer_logouts));
+
+						final Set<File> initial_shared_files = finished_shared_files
+								.stream().collect(Collectors.toSet());
+						initial_shared_files.removeAll(downloaded_files);
+						LoggerManager
+								.tracedLog(
+										this,
+										Level.INFO,
+										String.format(
+												"The initial sample of shared files contained %d files.",
+												new Integer(
+														initial_shared_files
+																.size())));
+
+						LoggerManager
+								.tracedLog(
+										this,
+										Level.INFO,
+										String.format(
+												"%d from %d downloads completed successfully (Validity Check: %b).",
+												count_successful_downloads,
+												count_requested_downloads,
+												new Boolean(
+														count_successful_downloads
+																.longValue() == (finished_shared_files
+																.size() - initial_shared_files
+																.size()))));
+
+						LoggerManager
+								.tracedLog(
+										this,
+										Level.INFO,
+										String.format(
+												"%d from %d successful downloads were acknowledged by the tracker.",
+												count_acknowledged_downloads,
+												count_successful_downloads));
+
+						LoggerManager
+								.tracedLog(
+										this,
+										Level.INFO,
+										String.format(
+												"The following files was the initial sample: %s",
+												initial_shared_files
+														.stream()
+														.map(x -> x
+																.getAbsolutePath())
+														.collect(
+																Collectors
+																		.toList())
+														.toString()));
+						LoggerManager
+								.tracedLog(
+										this,
+										Level.INFO,
+										String.format(
+												"The following files have been downloaded: %s",
+												downloaded_files
+														.stream()
+														.map(x -> x
+																.getAbsolutePath())
+														.collect(
+																Collectors
+																		.toList())
+														.toString()));
+
+						/*
+						 * Delete all shared files.
+						 */
+						if (this.delete_shared_files) {
+							finished_shared_files.parallelStream().forEach(
+									x -> x.delete());
+						}
+
+					}
 
 			}
 
 		} catch (final IOException ex) {
-			LoggerManager.tracedLog(this, Level.SEVERE, "An IOException occurred during the test.", ex);
+			LoggerManager.tracedLog(this, Level.SEVERE,
+					"An IOException occurred during the test.", ex);
 		} catch (final InterruptedException ex) {
-			LoggerManager.tracedLog(this, Level.WARNING, "The test was interrupted.", ex);
+			LoggerManager.tracedLog(this, Level.WARNING,
+					"The test was interrupted.", ex);
 		} finally {
 
 			try {
@@ -701,7 +868,8 @@ public class PeerTester extends CloseableThread {
 				this.close();
 
 			} catch (final IOException ex) {
-				LoggerManager.tracedLog(this, Level.WARNING, "The tracker could not be terminated properly.", ex);
+				LoggerManager.tracedLog(this, Level.WARNING,
+						"The tracker could not be terminated properly.", ex);
 			}
 
 		}

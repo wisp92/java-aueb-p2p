@@ -37,7 +37,7 @@ public class Peer extends CloseableThread {
 	 * failed CheckAlive request.
 	 */
 	public static final boolean COOPERATIVE_LOGOUT_POLICY = true;
-
+	
 	/*
 	 * This lock should be accessible for the peer to be updated in any way.
 	 */
